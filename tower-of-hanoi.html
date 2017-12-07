@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Tower of Hanoi</title>
+    <meta charset="utf-8">
+    <meta name="author" content="Mayur Hadawale">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+
+    <link href='http://fonts.googleapis.com/css?family=Fauna+One' rel='stylesheet' type='text/css'>
+    <link href='css/tower-of-hanoi.css' rel='stylesheet' type='text/css'>
+
+    <script type="text/javascript" src="js/Detector.js"></script>
+    <script type="text/javascript" src="js/jquery.min.js"></script>
+    <script type="text/javascript" src="js/three.min.js"></script>
+    <script type="text/javascript" src="js/leap.min.js"></script>
+    <script type="text/javascript" src="js/LeapCameraControls.js"></script>
+    <script type="text/javascript" src="js/LeapObjectControls.js"></script>
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+    <script type="text/javascript">
+
+      var camera, scene, renderer, light;
+      var discs = [], discDistanceY = [];
+      var left = [], mid = [], right = [];
+      var areaLeft, areaRight;
+      var towerLeft, towerMid, towerRight;
+      var leftDiscSize = [], midDiscSize = [], rightDiscSize = []; 
+
+      var moves = 0, totalDiscs = 4;
+      var haltGestures = false;
+
+      function init() {
+        // is webgl supported?
+        if (!Detector.webgl) {
+          Detector.addGetWebGLMessage();
+          return false;
+        };
+        
+        // swal("Enter the number of discs", {
+        //   content: "input",
+        // })
+        // .then((value) => {
+        //   totalDiscs: value;
+        //   // alert(value);
+        //   swal(`You typed: ${totalDiscs}`);
+        // });
+        // console.log(totalDiscs);
+
+        // renderer
+        renderer = new THREE.WebGLRenderer({antialias: true});
+        renderer.setSize($(window).width(), $(window).height());
+        renderer.setClearColor(0xffffff, 1);
+        $("#container").append(renderer.domElement);
+
+        // camera
+        camera = new THREE.PerspectiveCamera(25, $(window).width()/$(window).height(), 0.1, 10000);
+        camera.position.x = 850;
+        camera.position.y = 200;
+        camera.position.z = 0;
+        var origin = new THREE.Vector3(0, 0, 0);
+        camera.lookAt(origin);
+
+        // leap camera controls
+        // cameraControls = new THREE.LeapCameraControls(camera);
+
+        // world
+        scene = new THREE.Scene(); 
+
+        // // projector
+        // projector = new THREE.Projector();       
+
+        // towers
+        towerLeft = new THREE.Mesh(new THREE.CylinderGeometry(5,5,200,50), new THREE.MeshLambertMaterial({color: 0xff0000}));
+        towerMid = new THREE.Mesh(new THREE.CylinderGeometry(5,5,200,50), new THREE.MeshLambertMaterial({color: 0xff0000}));
+        towerRight = new THREE.Mesh(new THREE.CylinderGeometry(5,5,200,50), new THREE.MeshLambertMaterial({color: 0xff0000}));
+
+        // tower position
+
+        towerLeft.position.x = 50; towerMid.position.x = 50; towerRight.position.x = 50;
+        towerLeft.position.y = 20; towerMid.position.y = 20; towerRight.position.y = 20;
+        towerLeft.position.z = 150; towerMid.position.z = -10; towerRight.position.z = -160;
+        
+
+        scene.add(towerLeft); scene.add(towerMid); scene.add(towerRight);
+
+        //Fill tower left with discs and keep other towers empty
+        for (var i = 0; i < totalDiscs; i ++) {  
+        	left[i] = true; leftDiscSize[i] = i;
+        	mid[i] = false; midDiscSize[i] = -1;
+        	right[i] = false;  rightDiscSize[i] = -1;
+        }
+        
+        // gestureArea
+        areaLeft = towerRight.position.z; 
+        areaRight = towerLeft.position.z;
+        
+
+        // Discs
+        var objectPositionY = 0.2;
+        var cylinderRadius = 50;
+
+        for (var i = 0; i < totalDiscs; i ++) {
+
+          var disc = new THREE.CylinderGeometry(cylinderRadius,cylinderRadius,20,50);
+          var disc = new THREE.Mesh(disc, new THREE.MeshLambertMaterial({color: 0xff0000}));
+          disc.position.x = 50;
+          disc.position.y = objectPositionY * 200 - 100;
+          disc.position.z = 150;
+
+          discDistanceY[i] = disc.position.y;
+          objectPositionY = objectPositionY + 0.12;
+          cylinderRadius = cylinderRadius - 10;
+
+          disc.receiveShadow = true;
+
+          // leap disc controls
+          // var objectControls = new THREE.LeapObjectControls(camera, disc);
+
+          scene.add(disc);
+          discs.push(disc);
+          // document.getElementById("demo").innerHTML = disc.position.y+",";
+          // objectsControls.push(objectControls);
+        };
+        discs.reverse();
+        discDistanceY.reverse();
+
+        // light
+        light = new THREE.PointLight(0xefefef);
+        light.position = camera.position;
+        scene.add(light);
+
+        // listen to resize event
+        window.addEventListener('resize', onWindowResize, false);
+
+        // render (if no leap motion controller is detected, then this call is needed in order to see the plot)
+        render();
+      };   
+
+      function render() {
+        renderer.render(scene, camera);
+      };
+
+                
+      function onWindowResize() {
+        camera.aspect = $(window).width()/$(window).height();
+        camera.updateProjectionMatrix();
+        renderer.setSize($(window).width(), $(window).height());
+        render();
+      };
+
+      function discIndex(discArray){
+        var i=0;
+        console.log("discArray.length = "+ discArray.length);
+        while(i<discArray.length ){
+          if(discArray[i] == true){
+            return i;
+          }
+          i++
+        }
+        return i;
+      }
+      function checkWin(){
+        for (var i = 0; i < rightDiscSize.length; i++) {
+          if (rightDiscSize[i] != i) { return false; }
+        }
+        return true;
+      }
+      function winningColor(){
+        towerRight.material.color.setHex(0x00ff00);
+        for (var i = 0; i < discs.length; i++) {
+          discs[i].material.color.setHex(0x00ff00);
+        }
+      }
+
+      function transform(tipPosition, w, h) {
+        var width = 150;
+        var height = 150;
+        var minHeight = 100;
+
+        var ftx = tipPosition[0];
+        var fty = tipPosition[1];
+        ftx = (ftx > width ? width - 1 : (ftx < -width ? -width + 1 : ftx));
+        fty = (fty > 2*height ? 2*height - 1 : (fty < minHeight ? minHeight + 1 : fty));
+        var x = THREE.Math.mapLinear(ftx, -width, width, 0, w);
+        var y = THREE.Math.mapLinear(fty, 2*height, minHeight, 0, h);
+        return [x, y];
+      };
+
+
+      function showCursor(frame) {
+        var hl = frame.hands.length;
+        var fl = frame.pointables.length;
+
+        if (hl == 1) {
+          var f = frame.pointables[0];
+          var cont = $(renderer.domElement);
+          var offset = cont.offset();
+          var coords = transform(f.tipPosition, cont.width(), cont.height());
+          $("#cursor").css('left', offset.left + coords[0] - (($("#cursor").width() - 1)/2 + 1));
+          $("#cursor").css('top', offset.top + coords[1] - (($("#cursor").height() - 1)/2 + 1));
+        } else {
+          $("#cursor").css('left', -1000);
+          $("#cursor").css('top', -1000);
+        };
+      };
+
+
+// window.onbeforeunload = function() {
+  
+//    if (swal("Do you really want to refresh?", "All your moves will be decarded.", "error")) { return ""; }
+// };
+
+
+      $(function(){
+        init();
+
+        // leap loop
+        Leap.loop(function(frame) {
+
+          showCursor(frame);
+          if(frame.valid && frame.pointables.length > 0){
+              frame.gestures.forEach(function(gesture){
+                var point = frame.pointables[0];
+                if(!haltGestures){
+                  switch (gesture.type){//circle, keyTap, screenTap, swipe
+                        
+                    case "swipe":
+                    {
+                        console.log("Swipe Gesture");
+                        console.log(gesture.startPosition);
+                        console.log(gesture.position);
+                        console.log(gesture.direction);  
+
+                        // tap for toh  
+                        // cookies
+                        // sound
+                        // platform
+                        
+                         var isHorizontal = Math.abs(gesture.direction[0]) > Math.abs(gesture.direction[1]);
+                          if(isHorizontal){
+                              if(gesture.direction[0] > 0){ //right
+                                  if(gesture.startPosition[0] < areaLeft && gesture.position[0] < areaRight){ //left to mid
+
+                                    var indexLeft = discIndex(left);
+                                    var indexMid = discIndex(mid)-1;
+
+                                    if(indexLeft < discs.length && indexMid > -1){
+                                    	if((indexMid <=totalDiscs-2 && leftDiscSize[indexLeft] < midDiscSize[indexMid+1]) || indexMid==totalDiscs-1){
+                                    		discs[leftDiscSize[indexLeft]].position.y = discDistanceY[indexMid];
+		                                    discs[leftDiscSize[indexLeft]].position.z = towerMid.position.z; 
+
+		                                    left[indexLeft] = false;
+		                                    mid[indexMid] = true;
+
+		                                    midDiscSize[indexMid] = leftDiscSize[indexLeft];
+		                                    leftDiscSize[indexLeft] = -1;
+		                                    document.getElementById("total-moves").innerHTML = "Total Moves : "+ ++moves;
+                                        // return true;
+                                    	}
+                                    }
+                                  }
+                                  
+                                  else if(gesture.startPosition[0] < areaLeft && gesture.position[0] > areaRight){ //left to right
+
+                                    var indexLeft = discIndex(left); 
+                                    var indexRight = discIndex(right)-1;
+
+                                    if(indexLeft < discs.length && indexRight > -1){
+                                    	if((indexRight <=totalDiscs-2 && leftDiscSize[indexLeft] < rightDiscSize[indexRight+1]) || indexRight==totalDiscs-1){
+                  											discs[leftDiscSize[indexLeft]].position.y = discDistanceY[indexRight];
+                  											discs[leftDiscSize[indexLeft]].position.z = towerRight.position.z;  
+
+                  											left[indexLeft] = false;
+                  											right[indexRight] = true; 
+
+                  											rightDiscSize[indexRight] = leftDiscSize[indexLeft];
+		                                    leftDiscSize[indexLeft] = -1;
+		                                    document.getElementById("total-moves").innerHTML = "Total Moves : "+ ++moves;
+
+                                        if(checkWin()){ 
+                                          winningColor(); 
+                                          haltGestures = true;
+                                          swal("Good job!", "Total moves taken : "+moves, "success");
+                                          // return true;
+                                        }
+										                  }                                  
+                                    }
+                                  }
+                                  else if(gesture.startPosition[0] > areaLeft && gesture.position[0] > areaRight){ //mid to right
+
+                                    var indexMid = discIndex(mid); 
+                                    var indexRight = discIndex(right)-1;
+
+                                    if(indexMid < discs.length && indexRight > -1){
+                                    	if((indexRight <=totalDiscs-2 && midDiscSize[indexMid] < rightDiscSize[indexRight+1]) || indexRight==totalDiscs-1){
+		                                    discs[midDiscSize[indexMid]].position.y = discDistanceY[indexRight];
+		                                    discs[midDiscSize[indexMid]].position.z = towerRight.position.z;  
+
+		                                    mid[indexMid] = false;
+		                                    right[indexRight] = true;      
+
+		                                    rightDiscSize[indexRight] = midDiscSize[indexMid];
+		                                    midDiscSize[indexMid] = -1;
+		                                    document.getElementById("total-moves").innerHTML = "Total Moves : "+ ++moves;
+                                        if(checkWin()){ 
+                                          winningColor(); 
+                                          haltGestures = true;
+                                          swal("Good job!", "Total moves taken : "+moves, "success");
+                                        }
+		                                }                           
+                                    }
+                                  }
+                                }
+                                else { 
+                                  if(gesture.startPosition[0] > areaRight && gesture.position[0] > areaLeft){ //right to mid 
+
+                                    var indexRight = discIndex(right); 
+                                    var indexMid = discIndex(mid)-1;
+
+                                    if(indexRight < discs.length && indexMid > -1){
+                                    	if((indexMid <=totalDiscs-2 && rightDiscSize[indexRight] < midDiscSize[indexMid+1]) || indexMid==totalDiscs-1){
+		                                     discs[rightDiscSize[indexRight]].position.y = discDistanceY[indexMid];
+		                                     discs[rightDiscSize[indexRight]].position.z = towerMid.position.z; 
+
+		                                     right[indexRight] = false;
+		                                     mid[indexMid] = true;   
+
+		                                     midDiscSize[indexMid] = rightDiscSize[indexRight];
+		                                     rightDiscSize[indexRight] = -1;
+		                                     document.getElementById("total-moves").innerHTML = "Total Moves : "+ ++moves;
+                                        }                            
+                                    }
+                                  }
+                                  else if(gesture.startPosition[0] > areaRight && gesture.position[0] < areaLeft){ //right to left
+
+                                    var indexRight = discIndex(right); 
+                                    var indexLeft = discIndex(left) - 1;
+
+                                    if(indexRight < discs.length && indexLeft > -1){
+                                    	if((indexLeft <=totalDiscs-2 && rightDiscSize[indexRight] < leftDiscSize[indexLeft+1]) || indexLeft==totalDiscs-1){
+		                                     discs[rightDiscSize[indexRight]].position.y = discDistanceY[indexLeft];
+		                                     discs[rightDiscSize[indexRight]].position.z = towerLeft.position.z; 
+
+		                                     right[indexRight] = false;
+		                                     left[indexLeft] = true;
+
+		                                     leftDiscSize[indexLeft] = rightDiscSize[indexRight];
+		                                     rightDiscSize[indexRight] = -1;
+		                                     document.getElementById("total-moves").innerHTML = "Total Moves : "+ ++moves;
+                                        }                   
+                                    }
+                                  }
+                                  else if(gesture.startPosition[0] < areaRight && gesture.position[0] < areaLeft){ //mid to left
+
+                                    var indexMid = discIndex(mid); 
+                                    var indexLeft = discIndex(left)-1;
+
+                                    if(indexMid < discs.length && indexLeft > -1){
+                                    	if((indexLeft <=totalDiscs-2 && midDiscSize[indexMid] < leftDiscSize[indexLeft+1]) || indexLeft==totalDiscs-1){
+		                                     discs[midDiscSize[indexMid]].position.y = discDistanceY[indexLeft];
+		                                     discs[midDiscSize[indexMid]].position.z = towerLeft.position.z; 
+
+		                                     mid[indexMid] = false;
+		                                     left[indexLeft] = true;    
+
+		                                     leftDiscSize[indexLeft] = midDiscSize[indexMid];
+		                                     midDiscSize[indexMid] = -1;
+		                                     document.getElementById("total-moves").innerHTML = "Total Moves : "+ ++moves;
+			                               }                            
+                                    }
+                                  }
+                              }//end else
+                          }//horizontal
+                          render();
+                          break;
+                        }//case
+                      }//swith
+                  }
+              })
+          };
+
+          light.position = camera.position;
+
+          render();
+        });//leap.loop
+
+        // detect controls change
+        // setInterval(changeControlsIndex, 250);
+      });
+    </script>   
+  </head>
+
+  <body>
+    <div id="container"></div>
+    <div id="cursor"></div>
+    <!-- <div id="demo"></div> -->
+    <div id="total-moves"></div>
+  </body>
+</html>
