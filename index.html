@@ -24,12 +24,15 @@
     <script type="text/javascript" src="js/leap.min.js"></script>
     <script type="text/javascript" src="LeapCameraControls.js"></script>
     <script type="text/javascript" src="LeapObjectControls.js"></script>
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
 
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 
 	<script type="text/javascript">
 
+	
 	var haltGestures = false;
+	var hand, pinch;
 	var renderer;
 	function init() {
         // is webgl supported?
@@ -64,6 +67,8 @@
         var hl = frame.hands.length;
         var fl = frame.pointables.length;
 
+        // frame.pointables[1]
+
         if (hl == 1) {
           var f = frame.pointables[0];
           var cont = $(renderer.domElement);
@@ -78,7 +83,7 @@
       };
 
       function solar(tapPosition){
-      	if (tapPosition[0] < -40.0 && tapPosition[0] > -120.0 && tapPosition[1] < 220.0 && tapPosition[1] > 180.0) {
+      	if (tapPosition[0] < -45.0 && tapPosition[0] > -120.0 && tapPosition[1] < 220.0 && tapPosition[1] > 180.0) {
       		return true;
       	}
       	return false;
@@ -96,7 +101,7 @@
       	return false;
       }
 
-      $(function(){
+      $(function(){  
         init();
 
         // leap loop
@@ -120,12 +125,28 @@
 							  	}
 							  	else if (picture(gesture.position)) {
 							  		console.log("picture --> "+gesture.position[0]);
-							  		// window.location = "http://www.yoururl.com";
+							  		
+							  		if(localStorage.getItem("solar")){
+
+							  			// window.location = "http://www.yoururl.com";
+							  		}
+							  		else{
+							  			swal("Solar system is yet to be arranged.", "Try again", "error");
+							  		}
+
 							  	}
 							  	else if (tower(gesture.position)) {
 							  		console.log("tower --> "+gesture.position[0]);
 
-							  		window.location = "file:///M:/LeapLearn/Tower%20of%20Hanoi/three-leap-controls-master%20-%20new/threeleapcontrols-master/tower-of-hanoi.html";
+							  		// if(localStorage.getItem("puzzle")) {
+							  			if(true) {
+
+							  			window.location = "file:///M:/LeapLearn/tower-of-hanoi-demo.html";
+							  		}
+							  		else{
+							  			swal("Picture puzzle is yet to be solved.", "Try again", "error");
+							  		}
+							  		
 							  	}
 							  	// render();
 							  	break;
@@ -159,7 +180,7 @@
 <div class="container">
 	
     
-    <div class="wrapper col-md-4">
+    <div class="wrapper col-md-4 ">
 	            
 	    <div class="card radius shadowDepth1">
 	        <div class="card__image border-tlr-radius">
@@ -171,7 +192,7 @@
 	            <div class="card__share">
 
 	                <a id="share" class="share-icon" href="#">
-	                	<i class="fa fa-2x fa-star" aria-hidden="true"></i>
+	                	<i id="solar" class="fa fa-2x fa-star" aria-hidden="true"></i>
 	                </a>
 	            </div>
 
@@ -184,7 +205,7 @@
 	    </div>
 	</div>
 
-	<div class="wrapper col-md-4">
+	<div class="wrapper col-md-4 ">
 	            
 	    <div class="card radius shadowDepth1">
 	        <div class="card__image border-tlr-radius">
@@ -196,7 +217,7 @@
 	            <div class="card__share">
 
 	                <a id="share" class="share-icon" href="#">
-	                	<i class="fa fa-2x fa-star" aria-hidden="true"></i>
+	                	<i id="puzzle" class="fa fa-2x fa-star" aria-hidden="true"></i>
 	                </a>
 	            </div>
 
@@ -209,7 +230,7 @@
 	    </div>
 	</div>
 
-	<div class="wrapper col-md-4">
+	<div class="wrapper col-md-4 ">
 	            
 	    <div class="card radius shadowDepth1">
 	        <div class="card__image border-tlr-radius">
@@ -221,7 +242,7 @@
 	            <div class="card__share">
 
 	                <a id="share" class="share-icon" href="#">
-	                	<i class="fa fa-2x fa-star" aria-hidden="true"></i>
+	                	<i id="tower" class="fa fa-2x fa-star" aria-hidden="true"></i>
 	                </a>
 	            </div>
 
@@ -236,5 +257,22 @@
 </div>
 <div id="container"></div>
 <div id="cursor"></div>
+
+<script type="text/javascript">
+	// alert(localStorage.getItem("tower")+","+localStorage.getItem("solar")+","+localStorage.getItem("puzzle"));
+	
+	if(localStorage.getItem("tower")){
+		document.getElementById("tower").classList.add("fa-star-success");
+	}
+	if(localStorage.getItem("solar")){
+		document.getElementById("solar").classList.add("fa-star-success");
+	}
+	if(localStorage.getItem("puzzle")){
+		document.getElementById("puzzle").classList.add("fa-star-success");
+	}
+
+</script>
+
+
 </body>
 </html>

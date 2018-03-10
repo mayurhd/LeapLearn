@@ -30,14 +30,33 @@
       var discs = [], discDistanceY = [];
       var left = [], mid = [], right = [];
       var areaLeft, areaRight;
-      var towerLeft, towerMid, towerRight, platform;
+      var plane;
+      var towerLeft, towerMid, towerRight, platform, mid_wall, left_wall, right_wall;
       var leftDiscSize = [], midDiscSize = [], rightDiscSize = []; 
 
-      var moves = 0, totalDiscs = 5;
+      var moves = 0, totalDiscs = 2;
       var haltGestures = false;
 
       //sound variables
       var listener =null, sound=null, audioLoader=null;
+
+      // localStorage.setItem("tower",false);
+
+      // if (localStorage.getItem("tower") == null) {
+      //   localStorage.setItem("tower",false);
+      // }
+
+      window.onload = function(){
+      	if(localStorage.getItem("tower_score") != null){
+      		// document.getElementById("total_moves").innerHTML = localStorage.getItem("tower_score");	
+      		document.getElementById("prev-score").innerHTML = localStorage.getItem("tower_score");	
+      	}
+      	else{
+      		// document.getElementById("total_moves").innerHTML = 0;
+      		document.getElementById("prev-score").innerHTML = 0;
+      	}
+		
+	};
 
       function init() {
         // is webgl supported?
@@ -84,15 +103,49 @@
         towerMid = new THREE.Mesh(new THREE.CylinderGeometry(5,5,200,50), new THREE.MeshLambertMaterial({color: 0xff0000}));
         towerRight = new THREE.Mesh(new THREE.CylinderGeometry(5,5,200,50), new THREE.MeshLambertMaterial({color: 0xff0000}));
 
-        platform = new THREE.Mesh(new THREE.CylinderGeometry(500,500,20,6), new THREE.MeshLambertMaterial({color: 0x669999}));
+        
 
-        // tower position
+        //platform
+        platform = new THREE.Mesh(new THREE.CylinderGeometry(500,500,20,6), new THREE.MeshLambertMaterial({color: 0xbbff33})); //0xa6ff4d, bbff33
 
-        towerLeft.position.x = 50; towerMid.position.x = 50; towerRight.position.x = 50; platform.position.x = 50;
-        towerLeft.position.y = 20; towerMid.position.y = 20; towerRight.position.y = 20; platform.position.y = -100;
-        towerLeft.position.z = 150; towerMid.position.z = -10; towerRight.position.z = -160; platform.position.z = -10;
+        //walls
+        left_wall = new THREE.Mesh(new THREE.CylinderGeometry(350,350,0,4), new THREE.MeshLambertMaterial({color: 0xa6ff4d})); 
 
-        scene.add(towerLeft); scene.add(towerMid); scene.add(towerRight); scene.add(platform);
+        //addign texture
+        
+        mid_wall = new THREE.Mesh(new THREE.CylinderGeometry(360,360,0,4), 
+        new THREE.MeshLambertMaterial({
+        	color: 0x4ce600, 
+        	// map:new THREE.TextureLoader().load( 'img/grass.jpg' )
+        })); //0x00ff00
+
+        right_wall = new THREE.Mesh(new THREE.CylinderGeometry(350,350,0,4), new THREE.MeshLambertMaterial({color: 0xa6ff4d})); 
+
+        //walls rotation
+        mid_wall.rotation.x = 0.78; mid_wall.rotation.y = 0.05; mid_wall.rotation.z = 1.61;
+        left_wall.rotation.x = 1.09; left_wall.rotation.y = -410.85; left_wall.rotation.z = -0.75;
+        right_wall.rotation.x = 1.15; right_wall.rotation.y = -409.2; right_wall.rotation.z = -0.75;
+		
+
+        // tower positions
+        towerLeft.position.x = 50; towerMid.position.x = 50; towerRight.position.x = 50; 
+        towerLeft.position.y = 20; towerMid.position.y = 20; towerRight.position.y = 20; 
+        towerLeft.position.z = 140; towerMid.position.z = -10; towerRight.position.z = -150; 
+
+        //platform positions
+        platform.position.x = 50; 
+        platform.position.y = -100; 
+        platform.position.z = -10;
+
+        //walls positions
+        mid_wall.position.x = -400; left_wall.position.x = -400; right_wall.position.x = -280; 
+        mid_wall.position.y = -10; left_wall.position.y = 50; right_wall.position.y = 50; 
+        mid_wall.position.z = -10.5; left_wall.position.z = 400; right_wall.position.z = -395; 
+
+        
+
+        scene.add(towerLeft); scene.add(towerMid); scene.add(towerRight); scene.add(platform); 
+        scene.add(mid_wall); scene.add(left_wall); scene.add(right_wall); 
 
         //Fill tower left with discs and keep other towers empty
         for (var i = 0; i < totalDiscs; i ++) {  
@@ -116,7 +169,7 @@
           var disc = new THREE.Mesh(disc, new THREE.MeshLambertMaterial({color: 0xff0000}));
           disc.position.x = 50;
           disc.position.y = objectPositionY * 200 - 100;
-          disc.position.z = 150;
+          disc.position.z = towerLeft.position.z; //150;
 
           discDistanceY[i] = disc.position.y;
           objectPositionY = objectPositionY + 0.12;
@@ -150,8 +203,7 @@
       function render() {
         renderer.render(scene, camera);
       };
-
-                
+        
       function onWindowResize() {
         camera.aspect = $(window).width()/$(window).height();
         camera.updateProjectionMatrix();
@@ -174,6 +226,9 @@
         for (var i = 0; i < rightDiscSize.length; i++) {
           if (rightDiscSize[i] != i) { return false; }
         }
+        localStorage.setItem("tower",true);
+        localStorage.setItem("tower_score", moves);
+
         return true;
       }
       function winningColor(){
@@ -229,7 +284,6 @@
 
       $(function(){
         init();
-
         // leap loop
         Leap.loop(function(frame) {
 
@@ -264,12 +318,17 @@
 
                                 rightDiscSize[indexRight] = leftDiscSize[indexLeft];
                                 leftDiscSize[indexLeft] = -1;
-                                document.getElementById("total-moves").innerHTML = "Total Moves : "+ ++moves;
+                                document.getElementById("total_moves").innerHTML = ++moves;
 
                                 if(checkWin()){ 
                                   winningColor(); 
                                   haltGestures = true;
                                   swal("Good job!", "Total moves taken : "+moves, "success");
+                                  
+                                  setTimeout(function(){ 
+                                  	window.location = "file:///M:/LeapLearn/index.html";
+                                  }, 5000);
+                                  
                                   // return true;
                                 }
                               }                                  
@@ -292,7 +351,7 @@
 
                                  leftDiscSize[indexLeft] = rightDiscSize[indexRight];
                                  rightDiscSize[indexRight] = -1;
-                                 document.getElementById("total-moves").innerHTML = "Total Moves : "+ ++moves;
+                                 document.getElementById("total_moves").innerHTML = ++moves;
                                 }                   
                             }   
                           }
@@ -331,7 +390,7 @@
 
 		                                    midDiscSize[indexMid] = leftDiscSize[indexLeft];
 		                                    leftDiscSize[indexLeft] = -1;
-		                                    document.getElementById("total-moves").innerHTML = "Total Moves : "+ ++moves;
+		                                    document.getElementById("total_moves").innerHTML = ++moves;
                                         // return true;
                                     	}
                                     }
@@ -352,7 +411,7 @@
 
                   										// 	rightDiscSize[indexRight] = leftDiscSize[indexLeft];
 		                          //           leftDiscSize[indexLeft] = -1;
-		                          //           document.getElementById("total-moves").innerHTML = "Total Moves : "+ ++moves;
+		                          //           document.getElementById("total_moves").innerHTML = ++moves;
 
                             //             if(checkWin()){ 
                             //               winningColor(); 
@@ -378,11 +437,14 @@
 
 		                                    rightDiscSize[indexRight] = midDiscSize[indexMid];
 		                                    midDiscSize[indexMid] = -1;
-		                                    document.getElementById("total-moves").innerHTML = "Total Moves : "+ ++moves;
+		                                    document.getElementById("total_moves").innerHTML = ++moves;
                                         if(checkWin()){ 
                                           winningColor(); 
                                           haltGestures = true;
                                           swal("Good job!", "Total moves taken : "+moves, "success");
+                                          setTimeout(function(){ 
+		                                  	window.location = "file:///M:/LeapLearn/index.html";
+		                                  }, 3000);
                                         }
 		                                }                           
                                     }
@@ -404,7 +466,7 @@
 
 		                                     midDiscSize[indexMid] = rightDiscSize[indexRight];
 		                                     rightDiscSize[indexRight] = -1;
-		                                     document.getElementById("total-moves").innerHTML = "Total Moves : "+ ++moves;
+		                                     document.getElementById("total_moves").innerHTML = ++moves;
                                         }                            
                                     }
                                   }
@@ -423,7 +485,7 @@
 
 		                                //      leftDiscSize[indexLeft] = rightDiscSize[indexRight];
 		                                //      rightDiscSize[indexRight] = -1;
-		                                //      document.getElementById("total-moves").innerHTML = "Total Moves : "+ ++moves;
+		                                //      document.getElementById("total_moves").innerHTML = ++moves;
                                   //       }                   
                                   //   }
                                   // }
@@ -442,7 +504,7 @@
 
 		                                     leftDiscSize[indexLeft] = midDiscSize[indexMid];
 		                                     midDiscSize[indexMid] = -1;
-		                                     document.getElementById("total-moves").innerHTML = "Total Moves : "+ ++moves;
+		                                     document.getElementById("total_moves").innerHTML = ++moves;
 			                               }                            
                                     }
                                   }
@@ -465,13 +527,16 @@
 
                                     rightDiscSize[indexRight] = leftDiscSize[indexLeft];
                                     leftDiscSize[indexLeft] = -1;
-                                    document.getElementById("total-moves").innerHTML = "Total Moves : "+ ++moves;
+                                    document.getElementById("total_moves").innerHTML = ++moves;
 
                                     if(checkWin()){ 
                                       winningColor(); 
                                       haltGestures = true;
-                                      swal("Good job!", "Total moves taken : "+moves, "success");
-                                      // return true;
+
+                                  	  swal("Good job!", "Total moves taken : "+moves, "success");
+                                      setTimeout(function(){ 
+	                                  	window.location = "file:///M:/LeapLearn/index.html";
+	                                  }, 3000);
                                     }
                                   }                                  
                                 }
@@ -491,7 +556,7 @@
 
                                      leftDiscSize[indexLeft] = rightDiscSize[indexRight];
                                      rightDiscSize[indexRight] = -1;
-                                     document.getElementById("total-moves").innerHTML = "Total Moves : "+ ++moves;
+                                     document.getElementById("total_moves").innerHTML = ++moves;
                                     }                   
                                 }   
                               }
@@ -509,12 +574,10 @@
 
           render();
         });//leap.loop
-
         // detect controls change
         // setInterval(changeControlsIndex, 250);
     });
 	
-	document.cookie = "username=John Doe; expires=Thu, 18 Dec 2013 12:00:00 UTC";
 
     </script>   
   </head>
@@ -522,7 +585,17 @@
   <body>
     <div id="container"></div>
     <div id="cursor"></div>
-    <!-- <div id="demo"></div> -->
-    <div id="total-moves">Total Moves : 0</div>
+    
+    <div id="total-moves-text">Moves Taken</div>
+    <div id="total_moves">0</div>
+
+    <div id="Goal">Moves Required</div>
+    <div id="steps">15</div>
+
+    <div id="prev-score-text">Previous Score</div>
+    <div id="prev-score"></div>
+
   </body>
+
+  
 </html>

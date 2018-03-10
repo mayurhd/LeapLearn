@@ -46,12 +46,100 @@ a {color: #ff0000;}
   -webkit-border-radius: 6px;
   border: 1px solid #ff0000; 
 }
-#total-moves{
+#total_moves, #total-moves-text, #steps, #Goal, #prev-score-text, #prev-score{
   position: fixed;
-  font-size: 20px;
   font-weight: bolder;
+  z-index: 1;
+  color: #804200;
+}
+#total_moves{
+  font-size: 40px;
+  right: 80px;
+  top:50px;
+}
+#total-moves-text{ 
+  font-size: 25px;
   top: 10px;
   right: 10px;
-  z-index: 1;
-  color: #ff0000;
 }
+
+#steps{
+  font-size: 40px;
+  left: 90px;
+  top:50px;
+}
+#Goal{
+  font-size: 25px;
+  top: 10px;
+  left: 20px;
+}
+
+#prev-score-text{
+  margin-left: auto;
+  margin-right: auto;
+  font-size: 25px;
+  left: 600px;
+  top:10px;
+}
+#prev-score{
+  font-size: 40px;
+  top: 50px;
+  left: 680px;
+}
+
+/*#total_moves{
+  position: fixed;
+  font-size: 40px;
+  font-weight: bolder;
+  right: 80px;
+  top:50px;
+  z-index: 1;
+  color: #804200;
+}
+#total-moves-text{
+	position: fixed;
+	font-size: 25px;
+	font-weight: bolder;
+	top: 10px;
+	right: 10px;
+	z-index: 1;
+	color: #804200;
+}
+
+#steps{
+  position: fixed;
+  font-size: 40px;
+  font-weight: bolder;
+  left: 90px;
+  top:50px;
+  z-index: 1;
+  color: #804200;
+}
+#Goal{
+  position: fixed;
+  font-size: 25px;
+  font-weight: bolder;
+  top: 10px;
+  left: 20px;
+  z-index: 1;
+  color: #804200;
+}
+
+#prev-score-text{
+  position: fixed;
+  font-size: 25px;
+  font-weight: bolder;
+  left: 600px;
+  top:10px;
+  z-index: 1;
+  color: #804200;
+}
+#prev-score{
+  position: fixed;
+  font-size: 40px;
+  font-weight: bolder;
+  top: 50px;
+  left: 680px;
+  z-index: 1;
+  color: #804200;
+}*/

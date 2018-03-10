@@ -121,6 +121,10 @@ body {
 .fa-star{
     vertical-align: middle;
     color: #bfbfbf;
+    
+}
+.fa-star-success{
+    color: #00ff00;
 }
 
 .share-icon {
