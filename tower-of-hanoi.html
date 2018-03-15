@@ -33,7 +33,7 @@
       var towerLeft, towerMid, towerRight, platform, mid_wall, left_wall, right_wall;
       var leftDiscSize = [], midDiscSize = [], rightDiscSize = []; 
 
-      var moves = 0, totalDiscs = 3;
+      var moves = 0, totalDiscs = 4;
       var haltGestures = false;
 
 
@@ -46,7 +46,16 @@
       //   localStorage.setItem("tower",false);
       // }
 
-      
+      window.onload = function(){
+            document.getElementById("steps").innerHTML = (Math.pow(2, totalDiscs)) - 1;
+            if(localStorage.getItem("tower_score") != null){
+                document.getElementById("prev-score").innerHTML = localStorage.getItem("tower_score");  
+            }
+            else{
+                document.getElementById("prev-score").innerHTML = 0;
+            }
+            
+        };
 
       function init() {
         // is webgl supported?
@@ -313,7 +322,7 @@
                                   swal("Good job!", "Total moves taken : "+moves, "success");
                                   
                                   setTimeout(function(){ 
-                                  	window.location = "file:///M:/LeapLearn/index.html";
+                                  	window.location = "file:///M:/LeapLearn/dashboard.html";
                                   }, 5000);
                                   
                                   // return true;
