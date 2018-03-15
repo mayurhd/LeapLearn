@@ -1,18 +1,18 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Picture Puzzle</title>
+    <title>Tower of Hanoi</title>
     <meta charset="utf-8">
     <meta name="author" content="Mayur Hadawale">
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 
-    <link href='css/puzzle.css' rel='stylesheet' type='text/css'>
+    <link href='../../css/puzzle.css' rel='stylesheet' type='text/css'>
 
-    <script type="text/javascript" src="js/jquery.min.js"></script>
-    <script type="text/javascript" src="js/leap.min.js"></script>
-    <script type="text/javascript" src="js/three.min.js"></script>
-    <script type="text/javascript" src="js/LeapCameraControls.js"></script>
-    <script type="text/javascript" src="js/LeapObjectControls.js"></script>
+    <script type="text/javascript" src="../../js/jquery.min.js"></script>
+    <script type="text/javascript" src="../../js/leap.min.js"></script>
+    <script type="text/javascript" src="../../js/three.min.js"></script>
+    <script type="text/javascript" src="../../js/LeapCameraControls.js"></script>
+    <script type="text/javascript" src="../../js/LeapObjectControls.js"></script>
 
     <script type="text/javascript">
         const PUZZLE_DIFFICULTY = 3;
@@ -36,17 +36,6 @@
 
         var _mouse;
 
-        // window.onload = function(){
-        //     document.getElementById("steps").innerHTML = (Math.pow(2, totalDiscs)) - 1;
-        //     if(localStorage.getItem("tower_score") != null){
-        //         document.getElementById("prev-score").innerHTML = localStorage.getItem("tower_score");  
-        //     }
-        //     else{
-        //         document.getElementById("prev-score").innerHTML = 0;
-        //     }
-            
-        // };
-    
         function init(){
 
             renderer = new THREE.WebGLRenderer({antialias: true});
@@ -57,7 +46,7 @@
             _img = new Image();
             _img.addEventListener('load',onImage,false);
             
-            _img.src = "img/mario.jpeg";
+            _img.src = "mario.jpeg";
             // _img.src = "seaface.jpg";
             // _img.src = "xyz-small.jpg";
 

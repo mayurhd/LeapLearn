@@ -16,17 +16,37 @@
     <script type="text/javascript" src="js/LeapCameraControls.js"></script>
     <script type="text/javascript" src="js/LeapObjectControls.js"></script>
     <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+
+    <!-- <script src="//js.leapmotion.com/leap-0.6.4.js"></script>
+    <script src="//js.leapmotion.com/leap-plugins-0.1.10.js"></script>
+    <script src="//js.leapmotion.com/leap.rigged-hand-0.1.7.min.js"></script> -->
+
+    <!-- <script type="text/javascript" src="js/rigged-hand.js"></script> -->
+
+
     <script type="text/javascript">
 
       var camera, scene, renderer, light;
       var discs = [], discDistanceY = [];
       var left = [], mid = [], right = [];
       var areaLeft, areaRight;
-      var towerLeft, towerMid, towerRight;
+      var towerLeft, towerMid, towerRight, platform, mid_wall, left_wall, right_wall;
       var leftDiscSize = [], midDiscSize = [], rightDiscSize = []; 
 
-      var moves = 0, totalDiscs = 4;
+      var moves = 0, totalDiscs = 3;
       var haltGestures = false;
+
+
+      //sound variables
+      var listener =null, sound=null, audioLoader=null;
+
+      // localStorage.setItem("tower",false);
+
+      // if (localStorage.getItem("tower") == null) {
+      //   localStorage.setItem("tower",false);
+      // }
+
+      
 
       function init() {
         // is webgl supported?
@@ -34,7 +54,6 @@
           Detector.addGetWebGLMessage();
           return false;
         };
-        
         // swal("Enter the number of discs", {
         //   content: "input",
         // })
@@ -69,18 +88,50 @@
         // projector = new THREE.Projector();       
 
         // towers
+        // map: THREE.ImageUtils.loadTexture( 'img/hex.jpg' )
         towerLeft = new THREE.Mesh(new THREE.CylinderGeometry(5,5,200,50), new THREE.MeshLambertMaterial({color: 0xff0000}));
         towerMid = new THREE.Mesh(new THREE.CylinderGeometry(5,5,200,50), new THREE.MeshLambertMaterial({color: 0xff0000}));
         towerRight = new THREE.Mesh(new THREE.CylinderGeometry(5,5,200,50), new THREE.MeshLambertMaterial({color: 0xff0000}));
 
-        // tower position
-
-        towerLeft.position.x = 50; towerMid.position.x = 50; towerRight.position.x = 50;
-        towerLeft.position.y = 20; towerMid.position.y = 20; towerRight.position.y = 20;
-        towerLeft.position.z = 150; towerMid.position.z = -10; towerRight.position.z = -160;
         
 
-        scene.add(towerLeft); scene.add(towerMid); scene.add(towerRight);
+        //platform
+        platform = new THREE.Mesh(new THREE.CylinderGeometry(500,500,20,6), new THREE.MeshLambertMaterial({color: 0xbbff33})); //0xa6ff4d, bbff33
+
+        //walls
+        left_wall = new THREE.Mesh(new THREE.CylinderGeometry(350,350,0,4), new THREE.MeshLambertMaterial({color: 0xa6ff4d})); 
+
+        mid_wall = new THREE.Mesh(new THREE.CylinderGeometry(360,360,0,4), new THREE.MeshLambertMaterial({ color: 0xbbff33 })); //0x00ff00
+
+        right_wall = new THREE.Mesh(new THREE.CylinderGeometry(350,350,0,4), new THREE.MeshLambertMaterial({color: 0xa6ff4d})); 
+
+        //walls rotation
+        mid_wall.rotation.x = 0.78; mid_wall.rotation.y = 0.05; mid_wall.rotation.z = 1.61;
+        left_wall.rotation.x = 1.09; left_wall.rotation.y = -410.85; left_wall.rotation.z = -0.75;
+        right_wall.rotation.x = 1.15; right_wall.rotation.y = -409.2; right_wall.rotation.z = -0.75;
+		
+
+        // tower positions
+        towerLeft.position.x = 50; towerMid.position.x = 50; towerRight.position.x = 50; 
+        towerLeft.position.y = 20; towerMid.position.y = 20; towerRight.position.y = 20; 
+        towerLeft.position.z = 140; towerMid.position.z = -10; towerRight.position.z = -150; 
+
+        //platform positions
+        platform.position.x = 50; 
+        platform.position.y = -100; 
+        platform.position.z = -10;
+
+        //walls positions
+        mid_wall.position.x = -400; left_wall.position.x = -400; right_wall.position.x = -280; 
+        mid_wall.position.y = -10; left_wall.position.y = 50; right_wall.position.y = 50; 
+        mid_wall.position.z = -10.5; left_wall.position.z = 400; right_wall.position.z = -395; 
+
+        var plane = new THREE.Mesh( new THREE.PlaneGeometry( 5, 20, 32 ), new THREE.MeshLambertMaterial( {color: 0xffff00} ) );
+        plane.position.x = 0; plane.position.y = 0; plane.position.z = 0;
+        scene.add( plane );
+
+        scene.add(towerLeft); scene.add(towerMid); scene.add(towerRight); scene.add(platform); 
+        scene.add(mid_wall); scene.add(left_wall); scene.add(right_wall); 
 
         //Fill tower left with discs and keep other towers empty
         for (var i = 0; i < totalDiscs; i ++) {  
@@ -90,21 +141,22 @@
         }
         
         // gestureArea
-        areaLeft = towerRight.position.z; 
+        areaLeft = towerRight.position.z;
+        areaMid = towerMid.position.z; 
         areaRight = towerLeft.position.z;
-        
 
         // Discs
         var objectPositionY = 0.2;
-        var cylinderRadius = 50;
+        var cylinderRadius = 57.5;
 
+        // this.im = THREE.ImageUtils.loadTexture( 'img/hex.jpg' );
         for (var i = 0; i < totalDiscs; i ++) {
 
           var disc = new THREE.CylinderGeometry(cylinderRadius,cylinderRadius,20,50);
           var disc = new THREE.Mesh(disc, new THREE.MeshLambertMaterial({color: 0xff0000}));
           disc.position.x = 50;
           disc.position.y = objectPositionY * 200 - 100;
-          disc.position.z = 150;
+          disc.position.z = towerLeft.position.z; //150;
 
           discDistanceY[i] = disc.position.y;
           objectPositionY = objectPositionY + 0.12;
@@ -138,8 +190,7 @@
       function render() {
         renderer.render(scene, camera);
       };
-
-                
+        
       function onWindowResize() {
         camera.aspect = $(window).width()/$(window).height();
         camera.updateProjectionMatrix();
@@ -162,6 +213,9 @@
         for (var i = 0; i < rightDiscSize.length; i++) {
           if (rightDiscSize[i] != i) { return false; }
         }
+        localStorage.setItem("tower",true);
+        localStorage.setItem("tower_score", moves);
+
         return true;
       }
       function winningColor(){
@@ -203,6 +257,11 @@
         };
       };
 
+      function hideCursor(frame){
+        $("#cursor").css('left', -1000);
+        $("#cursor").css('top', -1000);
+      };
+
 
 // window.onbeforeunload = function() {
   
@@ -212,28 +271,90 @@
 
       $(function(){
         init();
-
         // leap loop
         Leap.loop(function(frame) {
 
+          // (window.controller = new Leap.Controller).use('riggedHand').connect()
           showCursor(frame);
           if(frame.valid && frame.pointables.length > 0){
               frame.gestures.forEach(function(gesture){
                 var point = frame.pointables[0];
                 if(!haltGestures){
+
                   switch (gesture.type){//circle, keyTap, screenTap, swipe
-                        
+                    case "keyTap":
+                    {
+                      if(frame.hands.length == 1) {
+                        if(frame.pointables.length == 1) {
+                          console.log("Screen Tap Gesture");
+                          console.log(gesture.position);
+                          if (gesture.position[0] < areaMid) {
+                            console.log("Tap --> "+gesture.position[0]);
+
+                            //left to right
+                            var indexLeft = discIndex(left); 
+                            var indexRight = discIndex(right)-1;
+
+                            if(indexLeft < discs.length && indexRight > -1){
+                              if((indexRight <=totalDiscs-2 && leftDiscSize[indexLeft] < rightDiscSize[indexRight+1]) || indexRight==totalDiscs-1){
+                                discs[leftDiscSize[indexLeft]].position.y = discDistanceY[indexRight];
+                                discs[leftDiscSize[indexLeft]].position.z = towerRight.position.z;  
+
+                                left[indexLeft] = false;
+                                right[indexRight] = true; 
+
+                                rightDiscSize[indexRight] = leftDiscSize[indexLeft];
+                                leftDiscSize[indexLeft] = -1;
+                                document.getElementById("total_moves").innerHTML = ++moves;
+
+                                if(checkWin()){ 
+                                  winningColor(); 
+                                  haltGestures = true;
+                                  swal("Good job!", "Total moves taken : "+moves, "success");
+                                  
+                                  setTimeout(function(){ 
+                                  	window.location = "file:///M:/LeapLearn/index.html";
+                                  }, 5000);
+                                  
+                                  // return true;
+                                }
+                              }                                  
+                            }
+                          }
+                          else if (gesture.position[0] > areaMid) {
+                            console.log("picture --> "+gesture.position[0]);
+
+                            //right to left
+                            var indexRight = discIndex(right); 
+                            var indexLeft = discIndex(left) - 1;
+
+                            if(indexRight < discs.length && indexLeft > -1){
+                              if((indexLeft <=totalDiscs-2 && rightDiscSize[indexRight] < leftDiscSize[indexLeft+1]) || indexLeft==totalDiscs-1){
+                                 discs[rightDiscSize[indexRight]].position.y = discDistanceY[indexLeft];
+                                 discs[rightDiscSize[indexRight]].position.z = towerLeft.position.z; 
+
+                                 right[indexRight] = false;
+                                 left[indexLeft] = true;
+
+                                 leftDiscSize[indexLeft] = rightDiscSize[indexRight];
+                                 rightDiscSize[indexRight] = -1;
+                                 document.getElementById("total_moves").innerHTML = ++moves;
+                                }                   
+                            }   
+                          }
+                          render();
+                          break;
+                        }
+                      }
+                    } 
                     case "swipe":
                     {
                         console.log("Swipe Gesture");
                         console.log(gesture.startPosition);
                         console.log(gesture.position);
                         console.log(gesture.direction);  
-
-                        // tap for toh  
-                        // cookies
+                        
                         // sound
-                        // platform
                         
                          var isHorizontal = Math.abs(gesture.direction[0]) > Math.abs(gesture.direction[1]);
                           if(isHorizontal){
@@ -253,38 +374,38 @@
 
 		                                    midDiscSize[indexMid] = leftDiscSize[indexLeft];
 		                                    leftDiscSize[indexLeft] = -1;
-		                                    document.getElementById("total-moves").innerHTML = "Total Moves : "+ ++moves;
+		                                    document.getElementById("total_moves").innerHTML = ++moves;
                                         // return true;
                                     	}
                                     }
                                   }
                                   
-                                  else if(gesture.startPosition[0] < areaLeft && gesture.position[0] > areaRight){ //left to right
+                            //       else if(gesture.startPosition[0] < areaLeft && gesture.position[0] > areaRight){ //left to right
 
-                                    var indexLeft = discIndex(left); 
-                                    var indexRight = discIndex(right)-1;
+                            //         var indexLeft = discIndex(left); 
+                            //         var indexRight = discIndex(right)-1;
 
-                                    if(indexLeft < discs.length && indexRight > -1){
-                                    	if((indexRight <=totalDiscs-2 && leftDiscSize[indexLeft] < rightDiscSize[indexRight+1]) || indexRight==totalDiscs-1){
-                  											discs[leftDiscSize[indexLeft]].position.y = discDistanceY[indexRight];
-                  											discs[leftDiscSize[indexLeft]].position.z = towerRight.position.z;  
+                            //         if(indexLeft < discs.length && indexRight > -1){
+                            //         	if((indexRight <=totalDiscs-2 && leftDiscSize[indexLeft] < rightDiscSize[indexRight+1]) || indexRight==totalDiscs-1){
+                  										// 	discs[leftDiscSize[indexLeft]].position.y = discDistanceY[indexRight];
+                  										// 	discs[leftDiscSize[indexLeft]].position.z = towerRight.position.z;  
 
-                  											left[indexLeft] = false;
-                  											right[indexRight] = true; 
+                  										// 	left[indexLeft] = false;
+                  										// 	right[indexRight] = true; 
 
-                  											rightDiscSize[indexRight] = leftDiscSize[indexLeft];
-		                                    leftDiscSize[indexLeft] = -1;
-		                                    document.getElementById("total-moves").innerHTML = "Total Moves : "+ ++moves;
+                  										// 	rightDiscSize[indexRight] = leftDiscSize[indexLeft];
+		                          //           leftDiscSize[indexLeft] = -1;
+		                          //           document.getElementById("total_moves").innerHTML = ++moves;
 
-                                        if(checkWin()){ 
-                                          winningColor(); 
-                                          haltGestures = true;
-                                          swal("Good job!", "Total moves taken : "+moves, "success");
-                                          // return true;
-                                        }
-										                  }                                  
-                                    }
-                                  }
+                            //             if(checkWin()){ 
+                            //               winningColor(); 
+                            //               haltGestures = true;
+                            //               swal("Good job!", "Total moves taken : "+moves, "success");
+                            //               // return true;
+                            //             }
+										                  // }                                  
+                            //         }
+                            //       }
                                   else if(gesture.startPosition[0] > areaLeft && gesture.position[0] > areaRight){ //mid to right
 
                                     var indexMid = discIndex(mid); 
@@ -300,11 +421,14 @@
 
 		                                    rightDiscSize[indexRight] = midDiscSize[indexMid];
 		                                    midDiscSize[indexMid] = -1;
-		                                    document.getElementById("total-moves").innerHTML = "Total Moves : "+ ++moves;
+		                                    document.getElementById("total_moves").innerHTML = ++moves;
                                         if(checkWin()){ 
                                           winningColor(); 
                                           haltGestures = true;
                                           swal("Good job!", "Total moves taken : "+moves, "success");
+                                          setTimeout(function(){ 
+		                                  	window.location = "file:///M:/LeapLearn/index.html";
+		                                  }, 3000);
                                         }
 		                                }                           
                                     }
@@ -326,29 +450,29 @@
 
 		                                     midDiscSize[indexMid] = rightDiscSize[indexRight];
 		                                     rightDiscSize[indexRight] = -1;
-		                                     document.getElementById("total-moves").innerHTML = "Total Moves : "+ ++moves;
+		                                     document.getElementById("total_moves").innerHTML = ++moves;
                                         }                            
                                     }
                                   }
-                                  else if(gesture.startPosition[0] > areaRight && gesture.position[0] < areaLeft){ //right to left
+                                  // else if(gesture.startPosition[0] > areaRight && gesture.position[0] < areaLeft){ //right to left
 
-                                    var indexRight = discIndex(right); 
-                                    var indexLeft = discIndex(left) - 1;
+                                  //   var indexRight = discIndex(right); 
+                                  //   var indexLeft = discIndex(left) - 1;
 
-                                    if(indexRight < discs.length && indexLeft > -1){
-                                    	if((indexLeft <=totalDiscs-2 && rightDiscSize[indexRight] < leftDiscSize[indexLeft+1]) || indexLeft==totalDiscs-1){
-		                                     discs[rightDiscSize[indexRight]].position.y = discDistanceY[indexLeft];
-		                                     discs[rightDiscSize[indexRight]].position.z = towerLeft.position.z; 
+                                  //   if(indexRight < discs.length && indexLeft > -1){
+                                  //   	if((indexLeft <=totalDiscs-2 && rightDiscSize[indexRight] < leftDiscSize[indexLeft+1]) || indexLeft==totalDiscs-1){
+		                                //      discs[rightDiscSize[indexRight]].position.y = discDistanceY[indexLeft];
+		                                //      discs[rightDiscSize[indexRight]].position.z = towerLeft.position.z; 
 
-		                                     right[indexRight] = false;
-		                                     left[indexLeft] = true;
+		                                //      right[indexRight] = false;
+		                                //      left[indexLeft] = true;
 
-		                                     leftDiscSize[indexLeft] = rightDiscSize[indexRight];
-		                                     rightDiscSize[indexRight] = -1;
-		                                     document.getElementById("total-moves").innerHTML = "Total Moves : "+ ++moves;
-                                        }                   
-                                    }
-                                  }
+		                                //      leftDiscSize[indexLeft] = rightDiscSize[indexRight];
+		                                //      rightDiscSize[indexRight] = -1;
+		                                //      document.getElementById("total_moves").innerHTML = ++moves;
+                                  //       }                   
+                                  //   }
+                                  // }
                                   else if(gesture.startPosition[0] < areaRight && gesture.position[0] < areaLeft){ //mid to left
 
                                     var indexMid = discIndex(mid); 
@@ -364,12 +488,64 @@
 
 		                                     leftDiscSize[indexLeft] = midDiscSize[indexMid];
 		                                     midDiscSize[indexMid] = -1;
-		                                     document.getElementById("total-moves").innerHTML = "Total Moves : "+ ++moves;
+		                                     document.getElementById("total_moves").innerHTML = ++moves;
 			                               }                            
                                     }
                                   }
                               }//end else
                           }//horizontal
+                          else{
+                            if(gesture.direction[1] > 0){ //up
+                              if(gesture.startPosition[0] < areaMid && gesture.position[0] < areaMid){ 
+                                //left to right
+                                var indexLeft = discIndex(left); 
+                                var indexRight = discIndex(right)-1;
+
+                                if(indexLeft < discs.length && indexRight > -1){
+                                  if((indexRight <=totalDiscs-2 && leftDiscSize[indexLeft] < rightDiscSize[indexRight+1]) || indexRight==totalDiscs-1){
+                                    discs[leftDiscSize[indexLeft]].position.y = discDistanceY[indexRight];
+                                    discs[leftDiscSize[indexLeft]].position.z = towerRight.position.z;  
+
+                                    left[indexLeft] = false;
+                                    right[indexRight] = true; 
+
+                                    rightDiscSize[indexRight] = leftDiscSize[indexLeft];
+                                    leftDiscSize[indexLeft] = -1;
+                                    document.getElementById("total_moves").innerHTML = ++moves;
+
+                                    if(checkWin()){ 
+                                      winningColor(); 
+                                      haltGestures = true;
+
+                                  	  swal("Good job!", "Total moves taken : "+moves, "success");
+                                      setTimeout(function(){ 
+	                                  	window.location = "file:///M:/LeapLearn/index.html";
+	                                  }, 3000);
+                                    }
+                                  }                                  
+                                }
+                              }
+                              else if(gesture.startPosition[0] > areaMid && gesture.position[0] > areaMid){ 
+                                //right to left
+                                var indexRight = discIndex(right); 
+                                var indexLeft = discIndex(left) - 1;
+
+                                if(indexRight < discs.length && indexLeft > -1){
+                                  if((indexLeft <=totalDiscs-2 && rightDiscSize[indexRight] < leftDiscSize[indexLeft+1]) || indexLeft==totalDiscs-1){
+                                     discs[rightDiscSize[indexRight]].position.y = discDistanceY[indexLeft];
+                                     discs[rightDiscSize[indexRight]].position.z = towerLeft.position.z; 
+
+                                     right[indexRight] = false;
+                                     left[indexLeft] = true;
+
+                                     leftDiscSize[indexLeft] = rightDiscSize[indexRight];
+                                     rightDiscSize[indexRight] = -1;
+                                     document.getElementById("total_moves").innerHTML = ++moves;
+                                    }                   
+                                }   
+                              }
+                            }
+                          }
                           render();
                           break;
                         }//case
@@ -382,17 +558,28 @@
 
           render();
         });//leap.loop
-
         // detect controls change
         // setInterval(changeControlsIndex, 250);
-      });
+    });
+	
+
     </script>   
   </head>
 
   <body>
     <div id="container"></div>
     <div id="cursor"></div>
-    <!-- <div id="demo"></div> -->
-    <div id="total-moves"></div>
+    
+    <div id="total-moves-text">Moves Taken</div>
+    <div id="total_moves">0</div>
+
+    <div id="Goal">Moves Required</div>
+    <div id="steps"></div>
+
+    <div id="prev-score-text">Previous Score</div>
+    <div id="prev-score"></div>
+
   </body>
+
+  
 </html>
