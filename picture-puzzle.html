@@ -15,11 +15,14 @@
     <script type="text/javascript" src="js/three.min.js"></script>
     <script type="text/javascript" src="js/LeapCameraControls.js"></script>
     <script type="text/javascript" src="js/LeapObjectControls.js"></script>
-    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+    <!-- <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script> -->
 
     <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+
+<script src="js/sweetalert.min.js"></script>
+
 
 
     <script type="text/javascript">
@@ -48,8 +51,7 @@
         var images = [
             'img/minion.jpeg',
             'img/mario.jpeg',
-            'img/1.jpeg',
-            'img/2.jpeg'
+            'img/tomnjerry.jpeg'
         ];
 
         // window.onload = function(){
@@ -320,12 +322,15 @@
             // document.onmousemove = null;
             // document.onmouseup = null;
             startPuzzle = true;
-
+            
+            localStorage.setItem("puzzle",true);
+            // localStorage.setItem("puzzleScore", moves);
+            
             // swal("Good job!", "Total moves taken : "+moves, "success");
             swal("Congrats!", "You made it in "+steps+" steps", "success");
                                   
             setTimeout(function(){ 
-            window.location = "file:///M:/LeapLearn/dashboard.html";
+            window.location = "http://localhost/LeapLearn/dashboard.html";
             }, 5000);
 
             // initPuzzle();
@@ -427,7 +432,22 @@
 
                       break;
                     } 
-                      }//swith
+                    case "swipe":
+                    {
+                        if(gesture.direction[1] < 0){ //down
+                            console.log("Swipe Down.")
+
+                            $(".reference").attr("src",_img.src);
+                            $(".modal").modal();
+                            setTimeout(function(){
+                                $('#reference-modal').modal('hide');
+                            },3000);
+                        }
+                        else{
+                            console.log("Swipe failed.")
+                        }
+                    }
+                      }//switch
                   // }
               })
           };
@@ -435,6 +455,7 @@
     });
 
 </script>
+
 </head>
 
 <body>
@@ -442,22 +463,32 @@
     <div id="cursor"></div>
     <center><canvas id="canvas"></canvas></center>
 
-    <button type="button" class="btn btn-primary" data-toggle="modal" data-target=".bd-example-modal-lg">Large modal</button>
+    <!-- <button type="button" class="btn btn-primary" data-toggle="modal" data-target=".bd-example-modal-lg">Large modal</button> -->
+
+    <!-- <div id="reference-modal" class="modal fade bd-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
+      <center><img class="reference" src=""></center>
+    </div> -->
 
     <div id="reference-modal" class="modal fade bd-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
-      <center><img class="reference" src=""></center>
+        <center>
+            <!-- <div class="modal-dialog modal-lg"> -->
+            <img class="reference modal-dialog-centered modal-dialog modal-lg" src="">
+            <!-- </div> -->
+        </center>
+    
     </div>
+
 
     <script type="text/javascript">
 
         // $(".reference").css({"width": _puzzleWidth/2, "height": _puzzleHeight/2});
 
-        $(".btn").on('click', function(){
-            $(".reference").attr("src",_img.src);
-            setTimeout(function(){
-                $('#reference-modal').modal('hide');
-            },2000);
-        })        
+        // $(".btn").on('click', function(){
+        //     $(".reference").attr("src",_img.src);
+        //     setTimeout(function(){
+        //         $('#reference-modal').modal('hide');
+        //     },20000000);
+        // })        
     </script>
 
 </body>

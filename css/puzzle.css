@@ -22,7 +22,11 @@
   right: 0;
   bottom: 0;
   margin: 5px;
-  overflow: hidden;
+  overflow: hidden; 
   /*border: 1px solid #cccccc;*/
   z-index: 0;
+}
+
+.modal-open .modal {
+     overflow-y: hidden!important; 
 }

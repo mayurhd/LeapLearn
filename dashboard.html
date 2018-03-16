@@ -22,18 +22,21 @@
     <script type="text/javascript" src="js/jquery.min.js"></script>
     <script type="text/javascript" src="js/three.min.js"></script>
     <script type="text/javascript" src="js/leap.min.js"></script>
+    <script src="http://js.leapmotion.com/leap-0.6.3.min.js"></script> 
     <script type="text/javascript" src="js/LeapCameraControls.js"></script>
     <script type="text/javascript" src="js/LeapObjectControls.js"></script>
     
 
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 
-    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+    <!-- <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script> -->
+	<script src="js/sweetalert.min.js"></script>
+
 	<script type="text/javascript">
 
-	
+	var controllerOptions = {enableGestures: true};
 	var haltGestures = false;
-	var hand, pinch;
+	var hand, fin, finger;
 	var renderer;
 
 // 	window.onload = function(){
@@ -100,19 +103,21 @@
       };
 
       function solar(tapPosition){
-      	if (tapPosition[0] < -45.0 && tapPosition[0] > -120.0 && tapPosition[1] < 220.0 && tapPosition[1] > 180.0) {
+      	if (tapPosition[0] < -40.0 && tapPosition[0] > -130.0 && tapPosition[1] < 230.0 && tapPosition[1] > 170.0) {
       		return true;
+
       	}
       	return false;
       }
       function picture(tapPosition){
-      	if (tapPosition[0] < 40.0 && tapPosition[0] > -40.0 && tapPosition[1] < 220.0 && tapPosition[1] > 180.0) {
+      	if (tapPosition[0] < 40.0 && tapPosition[0] > -40.0 && tapPosition[1] < 230.0 && tapPosition[1] > 170.0) {
+      		 // 10.6228,222.255,59.7884
       		return true;
       	}
       	return false;
       }
       function tower(tapPosition){
-      	if (tapPosition[0] > 40.0 && tapPosition[0] < 120.0 && tapPosition[1] < 220.0 && tapPosition[1] > 180.0) {
+      	if (tapPosition[0] > 40.0 && tapPosition[0] < 130.0 && tapPosition[1] < 230.0 && tapPosition[1] > 170.0) {
       		return true;
       	}
       	return false;
@@ -123,12 +128,72 @@
 
         // leap loop
         Leap.loop(function(frame) {
+        // Leap.loop(controllerOptions, function(frame) {
 
           showCursor(frame);
           if(frame.valid && frame.pointables.length > 0){
               frame.gestures.forEach(function(gesture){
 
                 if(!haltGestures){
+
+                //pinch
+
+                for (var i = 0; i < frame.hands.length; i++) {
+			      fin = frame.hands[i];
+			      	console.log("Grab: "+fin.grabStrength);
+				    console.log("Pinch: "+fin.pinchStrength);
+
+			        finger = frame.pointables[0];
+			        console.log("Position - "+finger.tipPosition);
+			    }
+
+			    if (fin.pinchStrength >= 0.8 || fin.grabStrength > 0.8) {
+			    	if (solar(finger.tipPosition)) {
+				  		// console.log("Solar --> "+gesture.position[0]);
+				  			window.location = "http://localhost/LeapLearn/solar-system.html";
+				  	}
+				  	else if (picture(finger.tipPosition)) {
+				  		// console.log("picture --> "+gesture.position[0]);
+				  		
+				  		// if(localStorage.getItem("solar")){
+				  			if (true) {
+
+				  			window.location = "http://localhost/LeapLearn/picture-puzzle.html";
+				  		}
+				  		else{
+				  			swal("Solar system is yet to be arranged.", "Try again", "error");
+				  			setTimeout(function(){
+				  				location.reload();
+				  			},5000);
+				  		}
+
+				  	}
+				  	else if (tower(finger.tipPosition)) {
+				  		// console.log("tower --> "+gesture.position[0]);
+
+				  		// if(localStorage.getItem("puzzle")) {
+				  			if(true) {
+
+				  			window.location = "http://localhost/LeapLearn/tower-of-hanoi.html";
+				  			// swal("Picture puzzle is yet to be solved.", "Try again", "error");
+				  		}
+				  		else{
+				  			swal("Picture puzzle is yet to be solved.", "Try again", "error");
+				  			setTimeout(function(){
+				  				location.reload();
+				  			},5000);
+				  			
+				  		}
+				  	}
+				  	else{
+				  		console.log("Kuch nhi hua");
+				  	}
+			    }
+			    
+
+		        //pinch end
+
+
                 	if(frame.hands.length == 1) {
                 		if(frame.pointables.length == 1) {
 							switch (gesture.type){//circle, keyTap, screenTap, swipe
@@ -138,7 +203,7 @@
 							  	console.log(gesture.position);
 							  	if (solar(gesture.position)) {
 							  		console.log("Solar --> "+gesture.position[0]);
-							  		// window.location = "http://www.yoururl.com";
+							  			window.location = "http://localhost/LeapLearn/solar-system.html";
 							  	}
 							  	else if (picture(gesture.position)) {
 							  		console.log("picture --> "+gesture.position[0]);
@@ -146,7 +211,7 @@
 							  		// if(localStorage.getItem("solar")){
 							  			if (true) {
 
-							  			window.location = "file:///M:/LeapLearn/picture-puzzle.html";
+							  			window.location = "http://localhost/LeapLearn/picture-puzzle.html";
 							  		}
 							  		else{
 							  			swal("Solar system is yet to be arranged.", "Try again", "error");
@@ -162,7 +227,7 @@
 							  		// if(localStorage.getItem("puzzle")) {
 							  			if(true) {
 
-							  			window.location = "file:///M:/LeapLearn/tower-of-hanoi.html";
+							  			window.location = "http://localhost/LeapLearn/tower-of-hanoi.html";
 							  			// swal("Picture puzzle is yet to be solved.", "Try again", "error");
 							  		}
 							  		else{

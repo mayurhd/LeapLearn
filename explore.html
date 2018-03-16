@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<script src='js/three.min.js'></script>
+<script src='js/threex.planets.js'></script>
+<script src='js/threex.atmospherematerial.js'></script>
+<script src='js/dat.gui.min.js'></script>
+<!-- <script src="../threex.atmospheredatgui.js"></script> -->
+<script type="text/javascript" src="js/Detector.js"></script>
+<script type="text/javascript" src="js/jquery.min.js"></script>
+<script type="text/javascript" src="js/leap.min.js"></script>
+<script type="text/javascript" src="js/LeapCameraControls.js"></script>
+<script type="text/javascript" src="js/LeapObjectControls.js"></script>
+<script src="http://js.leapmotion.com/leap-0.6.3.min.js"></script> 
+
+<script src="http://code.responsivevoice.org/responsivevoice.js"></script>
+<style type="text/css">
+	.speech-bubble{
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    right:150px;
+    top: 100px;
+    width:400px;	 
+	background: linear-gradient(to bottom, #3366cc 0%, #ff99cc 100%);
+	border-radius: .4em;
+}
+
+.speech-bubble:after {
+	content: '';
+	position: absolute;
+	left: 0;
+	top: 75%;
+	width: 0;
+	height: 0;
+	border: 61px solid transparent;
+	border-right-color:#ff99cc;
+	border-left: 0;
+	border-bottom: 0;
+	margin-top: -10.5px;
+	margin-left: -61px;
+}
+</style>>
+
+
+<body style='margin: 0px; background-color: #000000; overflow: hidden;'><script>
+    var ishalt=false;
+    var mesh;
+    var initialType	=1;
+    var names;
+	var renderer	= new THREE.WebGLRenderer({
+		antialias	: true
+	});
+	renderer.setSize( window.innerWidth, window.innerHeight );
+	document.body.appendChild( renderer.domElement );
+	renderer.shadowMapEnabled	= true
+	
+	var updateFcts	= [];
+	var scene	= new THREE.Scene();
+	var camera	= new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 0.01, 100 );
+	camera.position.z = 1;
+	var origin = new THREE.Vector3(0, 0, 0);
+        camera.lookAt(origin);
+
+        // leap camera controls
+        cameraControls = new THREE.LeapCameraControls(camera);
+
+        cameraControls.rotateEnabled  = false;
+        cameraControls.panEnabled     = false;
+        
+        cameraControls.zoomEnabled    = true;
+        cameraControls.zoomSpeed      = 5;
+        cameraControls.zoomHands      = 1;
+        cameraControls.zoomFingers    = [4,5];
+        cameraControls.zoomMin        = 0.1;
+        cameraControls.zoomMax        = 1;
+
+	var light	= new THREE.AmbientLight( 0x888888 )
+	scene.add( light )
+	// var light	= new THREE.DirectionalLight( 'white', 1)
+	// light.position.set(5,5,5)
+	// light.target.position.set( 0, 0, 0 )
+	// scene.add( light )
+
+	var light	= new THREE.DirectionalLight( 0xcccccc, 1 )
+	light.position.set(5,5,5)
+	scene.add( light )
+	light.castShadow	= true
+	light.shadowCameraNear	= 0.01
+	light.shadowCameraFar	= 15
+	light.shadowCameraFov	= 45
+
+	light.shadowCameraLeft	= -1
+	light.shadowCameraRight	=  1
+	light.shadowCameraTop	=  1
+	light.shadowCameraBottom= -1
+	// light.shadowCameraVisible	= true
+
+	light.shadowBias	= 0.001
+	light.shadowDarkness	= 0.2
+
+	light.shadowMapWidth	= 1024*2
+	light.shadowMapHeight	= 1024*2
+
+
+	 originX			= 600,
+	 originY			= 600,
+	 originZ			= 600,
+	 maxX			= originX,
+	 maxY			= originY,
+	 maxZ			= originZ,
+	 maxSpan			= 100,
+	 maxZSpan		    = 160,
+	 offsetY			= 1400;
+
+function translateX(distance) {
+	return (distance / maxSpan) * maxX;
+}
+function translateY(distance) {
+	return offsetY - ((distance / maxSpan) * maxY);
+}
+function translateZ(distance){
+	return (distance / maxZSpan) * maxZ;
+}
+
+function animate(posX,posY,posZ) {
+	mesh.rotation.x = posY / 200;
+	mesh.rotation.y = posX / 200;
+	mesh.rotation.z = posZ / 200;
+	renderer.render( scene, camera );
+}
+	
+	//////////////////////////////////////////////////////////////////////////////////
+	//		added starfield							//
+	//////////////////////////////////////////////////////////////////////////////////
+	
+	
+	var starSphere	= THREEx.Planets.createStarfield()
+	scene.add(starSphere)
+
+	//////////////////////////////////////////////////////////////////////////////////
+	//		Planets								//
+	//////////////////////////////////////////////////////////////////////////////////
+ 
+    var currentMesh	= null
+	function switchValue(type){
+		currentMesh && scene.remove(currentMesh)
+        if( type === 0 ){
+			 mesh	= THREEx.Planets.createMercury()
+		}else if( type === 1 ){
+			 mesh	= THREEx.Planets.createVenus()
+		}else if( type === 2 ){
+			 mesh	= new THREE.Object3D()
+			mesh.rotateZ(-23.4 * Math.PI/180)
+			
+		   earthMesh	= THREEx.Planets.createEarth()
+			earthMesh.receiveShadow	= true
+			earthMesh.castShadow	= true
+			mesh.add(earthMesh)
+			updateFcts.push(function(delta, now){
+				earthMesh.rotation.y += 1/32 * delta;		
+			})
+
+			var geometry	= new THREE.SphereGeometry(0.5, 32, 32)
+			var material	= THREEx.createAtmosphereMaterial()
+			material.uniforms.glowColor.value.set(0x00b3ff)
+			material.uniforms.coeficient.value	= 0.8
+			material.uniforms.power.value		= 2.0
+			var mesh1	= new THREE.Mesh(geometry, material );
+			mesh1.scale.multiplyScalar(1.01);
+			mesh.add( mesh1 );
+
+		 	var geometry	= new THREE.SphereGeometry(0.5, 32, 32)
+			var material	= THREEx.createAtmosphereMaterial()
+			material.side	= THREE.BackSide
+			material.uniforms.glowColor.value.set(0x00b3ff)
+			material.uniforms.coeficient.value	= 0.5
+			material.uniforms.power.value		= 4.0
+			var mesh2	= new THREE.Mesh(geometry, material );
+			mesh2.scale.multiplyScalar(1.15);
+			mesh.add( mesh2 );
+
+
+			var earthCloud	= THREEx.Planets.createEarthCloud()
+			earthCloud.receiveShadow	= true
+			earthCloud.castShadow	= true
+			mesh.add(earthCloud)
+			updateFcts.push(function(delta, now){
+				earthCloud.rotation.y += 1/8 * delta;		
+			})			
+		}else if( type === 3 ){
+			 mesh	= THREEx.Planets.createMars()
+		}else if( type === 4 ){
+			 mesh	= THREEx.Planets.createJupiter()
+		}else if( type === 5 ){
+			 mesh	= THREEx.Planets.createSaturn()
+			mesh.receiveShadow	= true
+			mesh.castShadow		= true
+			var ring	= THREEx.Planets.createSaturnRing()
+			ring.receiveShadow	= true
+			ring.castShadow		= true
+			mesh.add(ring)
+		}else if( type === 6 ){
+			 mesh	= THREEx.Planets.createUranus()
+			mesh.receiveShadow	= true
+			mesh.castShadow		= true
+			var ring	= THREEx.Planets.createUranusRing()
+			ring.receiveShadow	= true
+			ring.castShadow		= true
+			mesh.add(ring)
+		}else if( type === 7 ){
+			 mesh	= THREEx.Planets.createNeptune()
+		}else if( type === 8 ){
+			 mesh	= THREEx.Planets.createPluto()
+		}else	console.assert(false)
+		mesh.scale.set(0.1, 0.1, 0.1 )
+		scene.add(mesh)
+
+		currentMesh	= mesh
+		
+	}
+	
+	//mesh.scale.set(0.1, 0.1, 0.1 )
+	//switchValue(initialType)
+
+
+
+	//////////////////////////////////////////////////////////////////////////////////
+	//		render the scene						//
+	//////////////////////////////////////////////////////////////////////////////////
+	updateFcts.push(function(){
+		renderer.render( scene, camera );		
+	})
+	
+	//////////////////////////////////////////////////////////////////////////////////
+	//		loop runner							//
+	//////////////////////////////////////////////////////////////////////////////////
+	var lastTimeMsec= null
+	requestAnimationFrame(function animate(nowMsec){
+		// keep looping
+		requestAnimationFrame( animate );
+		// measure time
+		lastTimeMsec	= lastTimeMsec || nowMsec-1000/60
+		var deltaMsec	= Math.min(200, nowMsec - lastTimeMsec)
+		lastTimeMsec	= nowMsec
+		// call each update function
+		updateFcts.forEach(function(updateFn){
+			updateFn(deltaMsec/1000, nowMsec/1000)
+		})
+	})
+
+	   function render() {
+        renderer.render(scene, camera);
+      };
+
+
+$(function(){
+        // leap loop
+        
+        switchValue(initialType)
+  Leap.loop({enableGestures: true},function(frame) {
+    if (frame.pointables.length>4) {
+
+          var c=0;
+          var a=frame.pointables.length
+	      for (var i = 0; i < a; i++) {
+		  if(frame.pointables[i].extended == 1) c++ 
+          }
+
+      	if(ishalt==false){
+         	 for (var i = 0; i < frame.hands.length; i++) {
+           		 var hand = frame.hands[i]; 
+            	var pinch=hand.pinchStrength;
+            	var grab=hand.grabStrength;
+          		if (pinch >= 1 && c==3) {
+            	cameraControls.update(frame);
+          		}
+          	}
+
+
+          if(c==2){
+          	pointer = frame.pointables[0];
+	      	if(pointer!=0){
+		  	posX = translateX(pointer.tipPosition[0]);
+		  	posY = translateY(pointer.tipPosition[1]);
+		  	posZ = translateZ(pointer.tipPosition[2]);
+		  	animate(posX, posY, posZ);
+       	 	}
+          }
+       }
+         }       
+                if (c==0 && pinch!=1) {
+               		mesh.position.x =-0.1;
+                	mesh.scale.set(0.2, 0.2, 0.2)
+                	ishalt=true
+                	if( initialType == 0 ){
+			            document.getElementById('m').style.display = "block";
+		            }
+		            if( initialType == 1 ){
+			            document.getElementById('v').style.display = "block";
+		            }
+		            if( initialType == 2 ){
+			            document.getElementById('e').style.display = "block";
+		            }
+		            if( initialType == 3 ){
+			            document.getElementById('mars').style.display = "block";
+		            }
+		            if( initialType == 4 ){
+			            document.getElementById('j').style.display = "block";
+		            }
+		            if( initialType == 5 ){
+			            document.getElementById('s').style.display = "block";
+		            }
+		            if( initialType == 6 ){
+			            document.getElementById('u').style.display = "block";
+		            }
+		            if( initialType == 7 ){
+			            document.getElementById('n').style.display = "block";
+		            }
+		            if( initialType == 8 ){
+			            document.getElementById('p').style.display = "block";
+		            }
+
+					/*responsiveVoice.speak("Earth is often called the ocean planet. Its surface is 70 percent water. The oceans help regulate the temperature of the planet and influence weather.");*/
+                }
+                else {
+                  mesh.position.x =0;
+        	      mesh.scale.set(0.1, 0.1, 0.1 )
+                	if( initialType == 0 ){
+			            document.getElementById('m').style.display = "none";
+		            }
+		            if( initialType == 1 ){
+			            document.getElementById('v').style.display = "none";
+		            }
+		            if( initialType == 2 ){
+			            document.getElementById('e').style.display = "none";
+		            }
+		            if( initialType == 3 ){
+			            document.getElementById('mars').style.display = "none";
+		            }
+		            if( initialType == 4 ){
+			            document.getElementById('j').style.display = "none";
+		            }
+		            if( initialType == 5 ){
+			            document.getElementById('s').style.display = "none";
+		            }
+		            if( initialType == 6 ){
+			            document.getElementById('u').style.display = "none";
+		            }
+		            if( initialType == 7 ){
+			            document.getElementById('n').style.display = "none";
+		            }
+		            if( initialType == 8 ){
+			            document.getElementById('p').style.display = "none";
+		            }
+			     
+			      ishalt=false;
+                }
+            
+                      frame.gestures.forEach(function(gesture){
+
+                
+                	if(frame.hands.length == 1) {
+							switch (gesture.type){//circle, keyTap, screenTap, swipe
+	    														case "swipe":{
+							   if (frame.gestures.length > 0) {
+							   	console.log("Swipe Gesture");
+    	                       var g = frame.gestures[0];
+        							if (g.type === 'swipe' && g.state === 'stop') {
+           								 // Get the absolute movement along the x and y axis
+           								 var xMov = Math.abs(g.direction[0]);
+          							     var yMov = Math.abs(g.direction[1]);
+           								 if (xMov > 0.3) {
+                						if (g.direction[0] < 0) {
+                    					//onLeftSwipe();
+							  		     if(initialType>9){
+                    						initialType=0
+                    					}
+                    					else initialType++;
+                    					switchValue(initialType);                    					
+                						}
+                						
+            							}
+            						
+        							}
+    							}
+    							break;
+								}
+								}
+					}
+                  		
+                  		
+   
+              
+            })
+               
+    
+
+
+ 
+
+    });
+
+        // detect controls change
+        //setInterval(changeControlsIndex, 250);
+});
+  
+
+ if(initialType>9){
+                    						initialType=0
+                    					}
+                    					else initialType++;
+                    					switchValue(initialType);
+        
+</script>
+
+<div class="speech-bubble" id="m" style="font-size:25px;text-align: center;padding:30px 15px 20px;display: none;">
+    <p>
+Mercury, the smallest planet, goes whizzing around the Sun at a dazzling 31 miles per second. The planet travels so fast that it makes a complete loop in only 88 days. People have known about Mercury for thousands of years. It is named for the Roman god, Mercury, the fastest of all the gods.Mercury is the densest planet next to Earth. It has a solid core and crust. Its core is made of metal-mostly iron. Its crust is made of rock. Because Mercury is so small, it has a very weak magnetic field.
+</p>
+</div>
+
+<div class="speech-bubble" id="v" style="font-size:25px;text-align: center;padding:30px 15px 20px;display: none;">
+    <p>
+Named after the Roman goddess of love, Venus is anything but lovable. This planet is nearest to Earth. It is also about the same size as Earth. But that's all the two planets have in common. Venus's surface is thick with carbon dioxide. This gas traps heat from the sun, making the planet unbearably hot. Venus is 900 degrees or more!Thick clouds of sulfuric acid swirl around Venus. Sulfuric acid is a powerful acid that can melt just about anything it touches. The acid is as powerful as the acid found in a car battery.Venus is sometimes called the morning or evening star. Look for it at dusk or sunrise. It looks like a large, red star.
+</p>
+</div>
+
+
+<div class="speech-bubble info" id="e" style="font-size:25px;text-align: center;padding:30px 15px 20px;display: none;">
+    <p>Earth is often called the ocean planet. Its surface is 70 percent water. The oceans help regulate the temperature of the planet and influence weather.<br>
+The Earth has a molten inner core made of iron and other metals. Under the Earth's crust are plates that slowly move against each other. This movement causes mountains, hills, volcanoes and even earthquakes.<br>
+The Earth's atmosphere protects the planet from meteors. They usually burn up before they reach the Earth's surface.
+A strong magnetic field keeps our atmosphere securely blanketed around the Earth</p>
+</div>
+
+<div class="speech-bubble" id="mars" style="font-size:25px;text-align: center;padding:30px 15px 20px;display: none;">
+    <p>
+For many years, scientists wondered if life could exist on Mars, sometimes called the Red Planet. This planet, which is about half the size of Earth, isn't as much like Earth as scientists previously thought. Giant canyons and crevices mark the surface and scientists believe Mars once had lots of water. Today, though, only a little ice can be found. Scientists believe that ice lies beneath the surface.The surface of Mars is covered with rock and red dust made from iron. Mars has huge volcanoes and craters. The temperature is very cold, but it might have been warmer a few million years ago.
+</p>
+</div>
+
+<div class="speech-bubble" id="j" style="font-size:25px;text-align: center;padding:30px 15px 20px;display: none;">
+    <p>
+The largest planet in the solar system, Jupiter is covered by swirling clouds of hydrogen, helium and ammonia. Huge storms and raging winds create the swirled colors of Jupiter's atmosphere. The Red Spot, a gigantic storm, has been visible for at least 300 years.Scientists still have a lot to learn about Jupiter. They know that its atmosphere is similar to that of the Sun - mostly hydrogen and helium. If it was larger, the planet might have become a star. They also know that it has a strong magnetic field, much stronger than the Earth's. The gases on Jupiter are so thick and heavy at the surface of the planet that they become liquid metallic hydrogen. Scientists believe an icy rock core lies at the center of the planet.
+</p>
+</div>
+
+<div class="speech-bubble" id="s" style="font-size:25px;text-align: center;padding:30px 15px 20px;display: none;">
+    <p>
+The famous scientist, Galileo, first saw Saturn through a simple telescope in 1610. He thought the rings were two small planets or bodies of matter, in addition to Saturn's large body. Today, we know that Saturn is surrounded by yellow and gold rings, which are separated by a 3,000 mile divide, known as the Cassini Division. Scientists believe the rings are made mostly of ice water.Saturn, like Jupiter, is made mostly of hydrogen and helium. The planet has severe wind storms and the wind blows more than 1,600 feet per second. That's pretty fast. The strongest hurricane winds on earth reach only 360 feet per second.
+</p>
+</div>
+
+<div class="speech-bubble" id="u" style="font-size:25px;text-align: center;padding:30px 15px 20px;display: none;">
+    <p>
+Uranus is the second furthest planet from the sun and therefore also has to travel a pretty long time to go once around out home star, it takes Uranus roughly 84 years to orbit once around the sun.Uranus is a blue planet, not because of water, but because of gases that make it appear blue. Uranus orbits on its side, which means that its seasons are completely different to ours. Summer and winter each take 21 years at the north and south poles
+</p>
+</div>
+
+<div class="speech-bubble" id="n" style="font-size:25px;text-align: center;padding:30px 15px 20px;display: none;">
+    <p>
+Neptune is closely related to Uranus, the atmosphere is composed of almost the same gases and just like Uranus, Neptune also appears blue. Neptune inherits its name from the Roman god of the sea as reference to its deep blue color.
+Neptune is the furthest planet from the Sun and it takes 165 years for Neptune to go once around the Sun.
+No space probes have ever visited Neptune or its partner Uranus but a fly-by was made by the space probe Voyager 2 in 1989.
+</p>
+</div>
+
+<div class="speech-bubble" id="p" style="font-size:25px;text-align: center;padding:30px 15px 20px;display: none;">
+    <p>	
+The name Pluto is derived from the legendary Roman god of the underworld; also known as the world of the dead.
+Pluto was the smallest and furthest planet from the Sun in our solar system, now it is not even officially recognized as a planet!
+
+In 2006 Pluto was demoted to the status of dwarf planet.
+Because it is so far away from the sun it is very cold with temperatures ranging from -235 Degrees Celsius to -210 Degrees Celsius.
+Pluto consists of rock with a very thick coating of ice.
+The atmosphere of Pluto consists of nitrogen with some carbon monoxide and methane
+</p>
+</div>
+</body>

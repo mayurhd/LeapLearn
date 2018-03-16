@@ -1,0 +1,593 @@
+<html>
+<script src='js/three.min.js'></script>
+<script src='js/threex.planets.js'></script>
+<script src='js/threex.atmospherematerial.js'></script>
+<script src='js/dat.gui.min.js'></script>
+<!-- <script src="../threex.atmospheredatgui.js"></script> -->
+<script type="text/javascript" src="js/Detector.js"></script>
+<script type="text/javascript" src="js/jquery.min.js"></script>
+<script type="text/javascript" src="js/leap.min.js"></script>
+<script type="text/javascript" src="js/LeapCameraControls.js"></script>
+<script type="text/javascript" src="js/LeapObjectControls.js"></script>
+<script src="http://js.leapmotion.com/leap-0.6.3.min.js"></script> 
+
+<style>
+/* The Modal (background) */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    left: 420px;
+    top: 4px;
+    width: 50%; 
+    height: 50%; 
+    overflow: none; 
+
+}
+
+/* Modal Content */
+.modal-content {
+    position: relative;
+    background-color: black;
+    margin: auto;
+    padding-top: 5px;
+    border: 1px solid black;
+    width: 80%;
+    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
+    -webkit-animation-name: animatetop;
+    -webkit-animation-duration: 0.3s;
+    animation-name: animatetop;
+    animation-duration: 0.4s
+}
+
+/* Add Animation */
+@-webkit-keyframes animatetop {
+    from {top:-300px; opacity:0} 
+    to {top:0; opacity:1}
+}
+
+@keyframes animatetop {
+    from {top:-300px; opacity:0}
+    to {top:0; opacity:1}
+}
+
+/* The Close Button */
+.close {
+    color: white;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+    color: #000;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+
+
+.modal-body {
+	padding: 10px;
+}
+
+#cursor {
+  position: absolute;
+  left: -1000px;
+  top: -1000px;
+  z-index: 100;
+  padding: 0;
+  margin:0;
+
+}
+
+</style>
+<body style='margin:0px; background-color: #000000; overflow: hidden;' id="myDiv">
+<script>
+
+
+    var origin;
+	var renderer	= new THREE.WebGLRenderer({
+		antialias	: true
+	});
+	renderer.setSize( window.innerWidth, window.innerHeight );
+	document.body.appendChild( renderer.domElement );
+	renderer.shadowMapEnabled	= true
+	
+	var onRenderFcts= [];
+	var scene	= new THREE.Scene();
+	var camera	= new THREE.PerspectiveCamera(15, window.innerWidth / window.innerHeight, 0.01, 10000 );
+	camera.position.x = 0;
+	camera.position.y = 49.9;
+    camera.position.z =13;
+    origin = new THREE.Vector3(0,0, 0);
+    camera.lookAt(origin);
+
+	var light	= new THREE.AmbientLight( 0x222222 )
+	scene.add( light )
+
+	var light	= new THREE.DirectionalLight( 0xffffff, 1 )
+	light.position.set(5,5,5)
+	scene.add( light )
+	light.castShadow	= true
+	light.shadowCameraNear	= 0.01
+	light.shadowCameraFar	= 15
+	light.shadowCameraFov	= 45
+
+	light.shadowCameraLeft	= -1
+	light.shadowCameraRight	=  1
+	light.shadowCameraTop	=  1
+	light.shadowCameraBottom= -1
+	// light.shadowCameraVisible	= true
+
+	light.shadowBias	= 0.001
+	light.shadowDarkness	= 0.2
+
+	light.shadowMapWidth	= 1024
+	light.shadowMapHeight	= 1024
+
+	
+	//////////////////////////////////////////////////////////////////////////////////
+	//		added starfield							//
+	//////////////////////////////////////////////////////////////////////////////////
+	
+	var starSphere	= THREEx.Planets.createStarfield()
+	scene.add(starSphere)
+
+	//////////////////////////////////////////////////////////////////////////////////
+	//		add an object and make it move					//
+	//////////////////////////////////////////////////////////////////////////////////
+
+
+	var containerEarth	= new THREE.Object3D()
+	containerEarth.scale.set(0.5, 0.5, 0.5 )
+	scene.add(containerEarth)
+	/*var moonMesh	= THREEx.Planets.createMoon()
+	moonMesh.position.set(0.3,0.3,0.3)
+	moonMesh.scale.multiplyScalar(1/5)
+	moonMesh.receiveShadow	= true
+	moonMesh.castShadow	= true
+	containerEarth.add(moonMesh)*/
+
+	var earthMesh	= THREEx.Planets.createEarth()
+	earthMesh.receiveShadow	= true
+	earthMesh.castShadow	= true
+	containerEarth.add(earthMesh)
+	onRenderFcts.push(function(delta, now){
+		earthMesh.rotation.y += 1/32 * delta;		
+	})
+
+	var geometry	= new THREE.SphereGeometry(0.5, 32, 32)
+	var material	= THREEx.createAtmosphereMaterial()
+	material.uniforms.glowColor.value.set(0x00b3ff)
+	material.uniforms.coeficient.value	= 0.8
+	material.uniforms.power.value		= 2.0
+	var mesh	= new THREE.Mesh(geometry, material );
+	mesh.scale.multiplyScalar(1.01);
+	containerEarth.add( mesh );
+	// new THREEx.addAtmosphereMaterial2DatGui(material, datGUI)
+
+ 	var geometry	= new THREE.SphereGeometry(0.5, 32, 32)
+	var material	= THREEx.createAtmosphereMaterial()
+	material.side	= THREE.BackSide
+	material.uniforms.glowColor.value.set(0x00b3ff)
+	material.uniforms.coeficient.value	= 0.5
+	material.uniforms.power.value		= 4.0
+	var mesh	= new THREE.Mesh(geometry, material );
+	mesh.scale.multiplyScalar(1.15);
+	containerEarth.add( mesh );
+	// new THREEx.addAtmosphereMaterial2DatGui(material, datGUI)
+
+	var earthCloud	= THREEx.Planets.createEarthCloud()
+	earthCloud.receiveShadow	= true
+	earthCloud.castShadow	= true
+	containerEarth.add(earthCloud)
+	onRenderFcts.push(function(delta, now){
+		earthCloud.rotation.y += 1/8 * delta;		
+	})
+	
+
+    //Sun
+	var meshSun	= THREEx.Planets.createSun()
+
+	meshSun.scale.set(1.6, 1.6, 1.6 )
+	// mesh.visible	= false
+	scene.add(meshSun)
+
+	var geometry	= new THREE.SphereGeometry(0.5, 32, 32)
+	geometry	= mesh.geometry.clone()
+	var material	= THREEx.createAtmosphereMaterial()
+	material.uniforms.glowColor.value.set(0xb97f15)
+	var mesh	= new THREE.Mesh(geometry, material );
+	mesh.scale.multiplyScalar(1.1);
+	meshSun.add( mesh );
+
+
+	var geometry	= new THREE.SphereGeometry(0.5, 32, 32)
+	geometry	= mesh.geometry.clone()
+	var material	= THREEx.createAtmosphereMaterial()
+	material.side	= THREE.BackSide
+	material.uniforms.coeficient.value	= 0.6
+	material.uniforms.power.value		= 20.0
+	material.uniforms.glowColor.value.set(0xb97f15)
+	var mesh	= new THREE.Mesh(geometry, material );
+    mesh.scale.multiplyScalar(1.2);
+	meshSun.add( mesh );
+	
+	
+	//Mercury
+    var meshMercury	= THREEx.Planets.createMercury()
+
+	meshMercury.scale.set(0.35, 0.35, 0.35 )
+	// mesh.visible	= false
+	scene.add(meshMercury)
+	
+	//Venus
+    var meshVenus	= THREEx.Planets.createVenus()
+
+	meshVenus.scale.set(0.4, 0.4, 0.4 )
+	// mesh.visible	= false
+	scene.add(meshVenus)	
+	
+	//Mars
+    var meshMars	= THREEx.Planets.createMars()
+
+	meshMars.scale.set(0.4, 0.4, 0.4 )
+	// mesh.visible	= false
+	scene.add(meshMars)
+	
+	//Jupiter 
+    var meshJupiter	= THREEx.Planets.createJupiter()
+
+	meshJupiter.scale.set(1, 1, 1 )
+	// mesh.visible	= false
+	scene.add(meshJupiter)
+	
+	//Saturn 
+    var meshSaturn	= THREEx.Planets.createSaturn()
+
+	meshSaturn.scale.set(0.8, 0.8, 0.8 )
+	//meshSaturn.receiveShadow	= true
+	//meshSaturn.castShadow		= true
+	var ring	= THREEx.Planets.createSaturnRing()
+	ring.receiveShadow	= true
+	ring.castShadow		= true
+	meshSaturn.add(ring)
+	// mesh.visible	= false
+	scene.add(meshSaturn)
+	
+	//Uranus
+    var meshUranus	= THREEx.Planets.createUranus()
+
+	meshUranus.scale.set(0.7, 0.7, 0.7 )
+    //meshUranus.receiveShadow	= true
+	//meshUranus.castShadow		= true
+	var ring	= THREEx.Planets.createUranusRing()
+	ring.receiveShadow	= true
+	ring.castShadow		= true
+	meshUranus.add(ring)	
+	// mesh.visible	= false
+	scene.add(meshUranus)
+
+	
+	//Neptune 
+    var meshNeptune	= THREEx.Planets.createNeptune()
+
+	meshNeptune.scale.set(0.6, 0.6, 0.6 )
+	// mesh.visible	= false
+	scene.add(meshNeptune)
+	
+	//Pluto
+    var meshPluto	= THREEx.Planets.createPluto()
+	meshPluto.scale.set(0.4, 0.4, 0.4 )
+	// mesh.visible	= false
+	scene.add(meshPluto)	
+	
+	//Orbit
+
+	var orbit_1_geo=new THREE.TorusGeometry(4.5, 0.5, 1, 100);
+	var orbit_1_mat=new THREE.MeshBasicMaterial({color:"white" ,wireframe:true});
+	var orbit =new THREE.Mesh(orbit_1_geo,orbit_1_mat);
+	scene.add(orbit);
+
+	var orbit_2_geo=new THREE.TorusGeometry(5.5, 0.5, 1, 100);
+	var orbit_2_mat=new THREE.MeshBasicMaterial({color:"white" ,wireframe:true});
+	var orbit =new THREE.Mesh(orbit_2_geo,orbit_2_mat);
+	scene.add(orbit);
+
+	var orbit_3_geo=new THREE.TorusGeometry(6.5, 0.5, 1, 100);
+	var orbit_3_mat=new THREE.MeshBasicMaterial({color:"white" ,wireframe:true});
+	var orbit =new THREE.Mesh(orbit_3_geo,orbit_3_mat);
+	scene.add(orbit);
+
+	var orbit_4_geo=new THREE.TorusGeometry(7.5, 0.5, 1, 100);
+	var orbit_4_mat=new THREE.MeshBasicMaterial({color:"white" ,wireframe:true});
+	var orbit =new THREE.Mesh(orbit_4_geo,orbit_4_mat);
+	scene.add(orbit);
+
+	var orbit_5_geo=new THREE.TorusGeometry(8.5, 0.5, 1, 100);
+	var orbit_5_mat=new THREE.MeshBasicMaterial({color:"white" ,wireframe:true});
+	var orbit =new THREE.Mesh(orbit_5_geo,orbit_5_mat);
+	scene.add(orbit);
+
+	var orbit_6_geo=new THREE.TorusGeometry(9.5, 0.5, 1, 100);
+	var orbit_6_mat=new THREE.MeshBasicMaterial({color:"white" ,wireframe:true});
+	var orbit =new THREE.Mesh(orbit_6_geo,orbit_6_mat);
+	scene.add(orbit);	
+	var orbit_7_geo=new THREE.TorusGeometry(10.5, 0.5, 1, 100);
+	var orbit_7_mat=new THREE.MeshBasicMaterial({color:"white" ,wireframe:true});
+	var orbit =new THREE.Mesh(orbit_7_geo,orbit_7_mat);
+	scene.add(orbit);
+	
+	var orbit_8_geo=new THREE.TorusGeometry(11.5, 0.5, 1, 100);
+	var orbit_8_mat=new THREE.MeshBasicMaterial({color:"white" ,wireframe:true});
+	var orbit =new THREE.Mesh(orbit_8_geo,orbit_8_mat);
+	scene.add(orbit);
+
+	var orbit_9_geo=new THREE.TorusGeometry(12.5, 0.5, 1, 100);
+	var orbit_9_mat=new THREE.MeshBasicMaterial({color:"white" ,wireframe:true});
+	var orbit =new THREE.Mesh(orbit_9_geo,orbit_9_mat);
+	scene.add(orbit);	
+	
+	
+	//revolution of planet around sun
+   
+		onRenderFcts.push(function(delta, now){
+		
+        meshSun.rotation.y = 0.0002*Date.now();
+		containerEarth.rotation.y = -0.001*Date.now();
+		
+		meshMercury.position.x = Math.sin(0.0008*Date.now())*5;
+        meshMercury.position.y = Math.cos(0.0008*Date.now())*5;
+		
+		meshVenus.position.x = Math.sin(0.0006*Date.now())*6;
+        meshVenus.position.y = Math.cos(0.0006*Date.now())*6;
+		
+		containerEarth.position.x = Math.sin(0.0003*Date.now())*7;
+        containerEarth.position.y = Math.cos(0.0003*Date.now())*7;
+		
+		meshMars.position.x = Math.sin(0.0001*Date.now())*8;
+        meshMars.position.y = Math.cos(0.0001*Date.now())*8;
+		
+		meshJupiter.position.x = Math.sin(0.00009*Date.now())*9;
+        meshJupiter.position.y = Math.cos(0.00009* Date.now())*9;
+		
+		meshSaturn.position.x = Math.sin(0.00006*Date.now())*10;
+        meshSaturn.position.y = Math.cos(0.00006*Date.now())*10;
+		
+		meshUranus.position.x = Math.sin(0.00003*Date.now())*11;
+        meshUranus.position.y = Math.cos(0.00003*Date.now())*11;
+		
+		meshNeptune.position.x = Math.sin(0.00001*Date.now())*12;
+        meshNeptune.position.y = Math.cos(0.00001*Date.now())*12;
+		
+		meshPluto.position.x = Math.sin(0.000009*Date.now())*13;
+        meshPluto.position.y = Math.cos(0.000009*Date.now())*13;
+		
+		
+		
+	})
+	
+
+	function transform(tipPosition, w, h) {
+        var width = 150;
+        var height = 150;
+        var minHeight = 100;
+
+        var ftx = tipPosition[0];
+        var fty = tipPosition[1];
+        ftx = (ftx > width ? width - 1 : (ftx < -width ? -width + 1 : ftx));
+        fty = (fty > 2*height ? 2*height - 1 : (fty < minHeight ? minHeight + 1 : fty));
+        var x = THREE.Math.mapLinear(ftx, -width, width, 0, w);
+        var y = THREE.Math.mapLinear(fty, 2*height, minHeight, 0, h);
+        return [x, y];
+      };
+
+  
+       function showCursor(frame) {
+        var hl = frame.hands.length;
+        var fl = frame.pointables.length;
+
+        if (hl == 1) {
+          var f = frame.pointables[0];
+          var cont = $(renderer.domElement);
+          var offset = cont.offset();
+          var coords = transform(f.tipPosition, cont.width(), cont.height());
+          $("#cursor").css('left', offset.left + coords[0] - (($("#cursor").width() - 1)/2 + 1));
+          $("#cursor").css('top', offset.top + coords[1] - (($("#cursor").height() - 1)/2 + 1));
+        } else {
+          $("#cursor").css('left', -1000);
+          $("#cursor").css('top', -1000);
+        };
+      }
+
+/*function showCoords(event){
+    var x = event.clientX;
+    var y = event.clientY;
+    var coords = "X coords: " + x + ", Y coords: " + y;
+    document.getElementById("a").innerHTML = coords;
+}*/
+/*
+function showCoords(event){
+    var x = event.clientX;
+    var y = event.clientY;
+    if(1125<x && x<1165){
+    	if(359<y && y<400){
+            document.getElementById('myModal').style.display = "block";
+     }
+    } 
+   else document.getElementById('myModal').style.display = "none";
+  }*/
+  
+
+	//////////////////////////////////////////////////////////////////////////////////
+	//		render the scene						//
+	//////////////////////////////////////////////////////////////////////////////////
+	onRenderFcts.push(function(){
+		renderer.render( scene, camera );		
+	})
+	
+	//////////////////////////////////////////////////////////////////////////////////
+	//		loop runner							//
+	//////////////////////////////////////////////////////////////////////////////////
+	var lastTimeMsec= null
+	requestAnimationFrame(function animate(nowMsec){
+		// keep looping
+		requestAnimationFrame( animate );
+		// measure time
+		lastTimeMsec	= lastTimeMsec || nowMsec-1000/60
+		var deltaMsec	= Math.min(200, nowMsec - lastTimeMsec)
+		lastTimeMsec	= nowMsec
+		// call each update function
+		onRenderFcts.forEach(function(onRenderFct){
+			onRenderFct(deltaMsec/1000, nowMsec/1000)
+		})
+	})	
+
+	//////////////////////////////////////////////////////////////////////////////////
+	//		MAin Function						//
+	//////////////////////////////////////////////////////////////////////////////////
+
+      // function explore(tapPosition){
+      // 	if (tapPosition[0] > -96 && tapPosition[0] < -58&& tapPosition[1] < 360 && tapPosition[1] > 310) {
+      // 		return true;
+      // 	}
+      // 	return false;
+      // }
+
+      // function place(tapPosition){
+      // 	if (tapPosition[0] > -96 && tapPosition[0] < -58&& tapPosition[1] < 360 && tapPosition[1] > 310) {
+      // 		return true;
+      // 	}
+      // 	return false;
+      // }
+
+
+
+
+      window.setTimeout(function(){
+        window.location = "http://localhost/LeapLearn/dashboard.html";
+      },15000);
+
+      $(function(){
+        
+        //document.getElementById('myModal').style.display = "block";
+        // leap loop
+        Leap.loop({enableGestures: true},function(frame) {
+
+          showCursor(frame);
+          if(frame.valid && frame.pointables.length > 0){
+              frame.gestures.forEach(function(gesture){
+
+                
+                	if(frame.hands.length == 1) {
+							switch (gesture.type){//circle, keyTap, screenTap, swipe
+								// case "screenTap":
+								// {
+								// //if(frame.pointables.length == 1) {	
+							 //  	console.log("Screen Tap Gesture");
+							 //  	console.log(gesture.position);
+							 //  	//console.log(frame.hands[0].pinchStrength)
+							 //  	if (place(gesture.position)) {
+							 //  		console.log("place --> "+gesture.position[0]);
+							 //  		// window.location = "http://www.yoururl.com";
+							 //  	}
+							 //  	else if (quiz(gesture.position)) {
+							 //  		console.log("quiz --> "+gesture.position[0]);
+							 //  		// window.location = "http://www.yoururl.com";
+							 //  	}
+							 //  	if (explore(gesture.position)) {
+							 //  		console.log("explore --> "+gesture.position[0]);
+
+							 //  		window.location = "http://localhost/threex.planets-master/examples/zoom.html";
+							 //  	}
+							  
+							 //   // }
+							 //  	// render();
+							 //  	break;
+								// }
+								case "swipe":{
+							   if (frame.gestures.length > 0) {
+							   	console.log("Swipe Gesture");
+    	                       var g = frame.gestures[0];
+        							if (g.type === 'swipe' && g.state === 'stop') {
+           								 // Get the absolute movement along the x and y axis
+           								 var xMov = Math.abs(g.direction[0]);
+          							     var yMov = Math.abs(g.direction[1]);
+           								 if (xMov > 0.3) {
+                						if (g.direction[0] < 0) {
+                    					//onLeftSwipe();
+							  		    console.log("explore --> "+gesture.position[0]);
+										window.location = "http://localhost/LeapLearn/explore.html";                    					
+                						}
+                						else {
+                    					//onRightSwipe();
+                    					console.log("explore --> "+gesture.position[0]);
+										window.location = "http://localhost/LeapLearn/place-planets.html";
+
+                						}
+            							}
+            							if (yMov > 0.3) {
+                						if (g.direction[1] < 0) {
+                   						 //onDownSwipe();
+                   						origin = new THREE.Vector3(0,7, 0);
+                   						camera.lookAt(origin);
+                    					document.getElementById('myModal').style.display = "block";
+                						}
+                						/*else {
+                    					//onUpSwipe();
+                    					origin = new THREE.Vector3(0,0, 0);
+                    					camera.lookAt(origin);
+                    					document.getElementById('myModal').style.display = "none";
+               							 }*/
+            							}
+        							}
+    							}
+    							break;
+								}
+							}
+                  		
+                  		
+              		}
+              		else{
+              			console.log("Only one hand allowed.");
+              		}
+              
+            })
+        };
+
+          // render();
+        });//leap.loop
+
+        // detect controls change
+        // setInterval(changeControlsIndex, 250);
+      });
+
+
+
+
+
+
+
+</script>
+
+
+<!-- The Modal -->
+<div id="myModal" class="modal" >
+  <!-- Modal content -->
+  <div class="modal-content">
+    <div class="modal-body" style="display:inline;">
+      <img src="img/space.png" height=180px width="210px">  
+      <img src="img/place.png" height=180px width="210px" style="padding-left:50px;">
+      
+    </div>
+
+  </div>
+
+</div>
+<div id="cursor">
+	<img src="img/cursor.png">
+</div>
+</body>
+</html>

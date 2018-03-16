@@ -15,7 +15,9 @@
     <script type="text/javascript" src="js/leap.min.js"></script>
     <script type="text/javascript" src="js/LeapCameraControls.js"></script>
     <script type="text/javascript" src="js/LeapObjectControls.js"></script>
-    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+    <!-- <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script> -->
+    <script src="js/sweetalert.min.js"></script>
+
 
     <!-- <script src="//js.leapmotion.com/leap-0.6.4.js"></script>
     <script src="//js.leapmotion.com/leap-plugins-0.1.10.js"></script>
@@ -322,7 +324,7 @@
                                   swal("Good job!", "Total moves taken : "+moves, "success");
                                   
                                   setTimeout(function(){ 
-                                  	window.location = "file:///M:/LeapLearn/dashboard.html";
+                                  	window.location = "http://localhost/LeapLearn/dashboard.html";
                                   }, 5000);
                                   
                                   // return true;
@@ -436,7 +438,7 @@
                                           haltGestures = true;
                                           swal("Good job!", "Total moves taken : "+moves, "success");
                                           setTimeout(function(){ 
-		                                  	window.location = "file:///M:/LeapLearn/dashboard.html";
+		                                  	window.location = "http://localhost/LeapLearn/dashboard.html";
 		                                  }, 3000);
                                         }
 		                                }                           
@@ -528,7 +530,7 @@
 
                                   	  swal("Good job!", "Total moves taken : "+moves, "success");
                                       setTimeout(function(){ 
-	                                  	window.location = "file:///M:/LeapLearn/dashboard.html";
+	                                  	window.location = "http://localhost/LeapLearn/dashboard.html";
 	                                  }, 3000);
                                     }
                                   }                                  

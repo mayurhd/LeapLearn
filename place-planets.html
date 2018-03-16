@@ -1,0 +1,446 @@
+<html>
+<script src='js/three.min.js'></script>
+<script src='js/threex.planets.js'></script>
+<script src='js/threex.atmospherematerial.js'></script>
+<script src='js/dat.gui.min.js'></script>
+<!-- <script src="../threex.atmospheredatgui.js"></script> -->
+<script type="text/javascript" src="js/Detector.js"></script>
+<script type="text/javascript" src="js/jquery.min.js"></script>
+<script type="text/javascript" src="js/leap.min.js"></script>
+<script type="text/javascript" src="js/LeapCameraControls.js"></script>
+<script type="text/javascript" src="js/LeapObjectControls.js"></script>
+<script src="http://js.leapmotion.com/leap-0.6.3.min.js"></script> 
+<script src="js/sweetalert.min.js"></script>
+
+<style type="text/css">
+#cursor {
+  position: absolute;
+  left: -1000px;
+  top: -1000px;
+  z-index: 100;
+  width: 10px;
+  height: 10px;
+  background-color: #ffffff;
+  border-radius: 8px; 
+  -moz-border-radius: 6px; 
+  -webkit-border-radius: 6px;
+  border: 1px solid #ff0000; 
+}
+
+.speech-bubble{
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    left: 30%;
+    top: 8%;
+    width:400px;
+    background: linear-gradient(to bottom, #3366cc 0%, #ff99cc 100%);
+    border-radius: .4em;
+}
+
+#numbers{
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    left: 60%;
+    top: 8%;
+    width:15%;
+    background: linear-gradient(to bottom, #3366cc 0%, #ff99cc 100%);
+    border-radius: .4em;
+}
+
+</style>> 
+<body style='margin:0px; background-color: #000000; overflow: hidden;'>
+<script>
+	var distance_x = [5.3,3.8,2.2,0.8,-1,-3,-5.3,-7.5];
+    var planets=[]
+	var placed = [0,0,0,0,0,0,0,0];
+	var randomMap=[0,0,0,0,0,0,0,0];
+	var visited=[0,0,0,0,0,0,0,0];
+	var position=[]
+	var flag=0;
+	var p,finger;
+    var randomNumber;
+    var occur=0;
+
+    function init(){
+    	if (!Detector.webgl) {
+          Detector.addGetWebGLMessage();
+          return false;
+        };
+
+    }
+    //Numbering
+    // for(var i=0;i<8;i++){
+    //   var texti = document.createElement('span');
+    //   texti.style.position = 'absolute';
+    //   //text2.style.zIndex = 1;    // if you still don't see the label, try uncommenting this
+    //   texti.style.width = 100;
+    //   texti.style.height = 100;
+    //   texti.style.backgroundColor = "none";
+    //   texti.style.color = "white";
+    //   texti.innerHTML = i+1;
+    //   texti.style.fontSize = 25 + 'px';
+    //   texti.style.top = 73 + '%';
+
+    //   if(i==0) texti.style.right = 12.6 + '%';
+    //   else if(i==1) texti.style.right = 22 + '%';
+    //   else if(i==2) texti.style.right = 30.8 + '%';
+    //   else if(i==3) texti.style.right = 39.4 + '%';
+    //   else if(i==4) texti.style.right = 49.7 + '%';
+    //   else if(i==5) texti.style.right = 61.7+ '%';
+    //   else if(i==6) texti.style.right =74.6+ '%';
+    //   else texti.style.right =87.6+ '%';
+    //   document.body.appendChild(texti);
+    // }
+
+    function Dice(p){
+    	if(p!=8){
+    	     randomNumber = Math.floor(Math.random() * 8) + 1;    
+		      if(randomMap[randomNumber-1]==1){
+		           Dice();		
+              }
+		 	randomMap[randomNumber-1]=1;
+		 	
+			switch(randomNumber){
+			  case 1:document.getElementById("current_planet").innerHTML="Mercury";
+			         break;
+			  case 2:document.getElementById("current_planet").innerHTML="Venus";
+			         break;
+			  case 3:document.getElementById("current_planet").innerHTML="Earth";
+			         break;
+			  case 4:document.getElementById("current_planet").innerHTML="Mars";
+			         break;
+			  case 5:document.getElementById("current_planet").innerHTML="Jupiter";
+			         break;
+			  case 6:document.getElementById("current_planet").innerHTML="Saturn";
+			         break;
+			  case 7:document.getElementById("current_planet").innerHTML="Uranus";
+			         break;
+			  case 8:document.getElementById("current_planet").innerHTML="Neptune";
+			         break;
+			  case 9:document.getElementById("current_planet").innerHTML="Pluto";
+			         break;		
+			  default:break;      			 
+		 }
+		}
+		else checkWin();
+    }
+
+    function checkWin(){
+    	for(var i=0;i<8;i++){
+    		if(position[i]!=i){
+               flag++;
+    		}
+    	}
+    	if(flag==0){
+    		swal("Congrats!", "Solar System Completed Successfully", "success");
+
+    		localStorage.setItem("solar",true);
+
+			window.setTimeout(function(){
+			window.location = "http://localhost/LeapLearn/solar-system.html";
+			},3000);
+    	}
+    	else{ 
+    		swal("Solar system is yet to be arranged.",""+flag+" Plants Misplaced", "error");
+    		window.setTimeout(function(){
+			window.location = "http://localhost/LeapLearn/solar-system.html";
+			},3000);
+    	}	
+    }
+
+	var renderer	= new THREE.WebGLRenderer({
+		antialias	: true
+	});
+
+	renderer.setSize( window.innerWidth, window.innerHeight );
+	document.body.appendChild( renderer.domElement );
+	renderer.shadowMapEnabled	= true
+	
+	var onRenderFcts= [];
+	var scene	= new THREE.Scene();
+	var camera	= new THREE.PerspectiveCamera(82, window.innerWidth / window.innerHeight, 0.01, 100 );
+	camera.position.z = 5;
+	var origin = new THREE.Vector3(0,0, 0);
+	camera.lookAt(origin);
+
+	// leap camera controls
+    cameraControls = new THREE.LeapCameraControls(camera);
+        
+
+	var light	= new THREE.AmbientLight( 0x222222 )
+	scene.add( light )
+
+	var light	= new THREE.DirectionalLight( 0xffffff, 1 )
+	light.position.set(5,5,5)
+	scene.add( light )
+	light.castShadow	= true
+	light.shadowCameraNear	= 0.01
+	light.shadowCameraFar	= 15
+	light.shadowCameraFov	= 45
+
+	light.shadowCameraLeft	= -1
+	light.shadowCameraRight	=  1
+	light.shadowCameraTop	=  1
+	light.shadowCameraBottom= -1
+	// light.shadowCameraVisible	= true
+
+	light.shadowBias	= 0.001
+	light.shadowDarkness	= 0.2
+
+	light.shadowMapWidth	= 1024*2
+	light.shadowMapHeight	= 1024*2
+
+
+	
+	// Setup Leap loop with frame callback function
+    var controllerOptions = {enableGestures: true};
+	
+	//////////////////////////////////////////////////////////////////////////////////
+	//		added starfield							//
+	//////////////////////////////////////////////////////////////////////////////////
+	
+	var starSphere	= THREEx.Planets.createStarfield()
+	scene.add(starSphere)
+
+	//////////////////////////////////////////////////////////////////////////////////
+	//		add an object and make it move					//
+	//////////////////////////////////////////////////////////////////////////////////
+	
+	
+	
+    //Earth
+	var containerEarth	= new THREE.Object3D()
+	containerEarth.rotateZ(-23.4 * Math.PI/180)
+	containerEarth.scale.set(0.7, 0.7, 0.7 )
+
+	var earthMesh	= THREEx.Planets.createEarth()
+	earthMesh.receiveShadow	= true
+	earthMesh.castShadow	= true
+	containerEarth.add(earthMesh)
+	onRenderFcts.push(function(delta, now){
+		earthMesh.rotation.y += 1/32 * delta;		
+	})
+
+	var geometry	= new THREE.SphereGeometry(0.5, 32, 32)
+	var material	= THREEx.createAtmosphereMaterial()
+	material.uniforms.glowColor.value.set(0x00b3ff)
+	material.uniforms.coeficient.value	= 0.8
+	material.uniforms.power.value		= 2.0
+	var mesh	= new THREE.Mesh(geometry, material );
+	mesh.scale.multiplyScalar(1.01);
+	containerEarth.add( mesh );
+	// new THREEx.addAtmosphereMaterial2DatGui(material, datGUI)
+
+ 	var geometry	= new THREE.SphereGeometry(0.5, 32, 32)
+	var material	= THREEx.createAtmosphereMaterial()
+	material.side	= THREE.BackSide
+	material.uniforms.glowColor.value.set(0x00b3ff)
+	material.uniforms.coeficient.value	= 0.5
+	material.uniforms.power.value		= 4.0
+	var mesh	= new THREE.Mesh(geometry, material );
+	mesh.scale.multiplyScalar(1.15);
+	containerEarth.add( mesh );
+	// new THREEx.addAtmosphereMaterial2DatGui(material, datGUI)
+
+	var earthCloud	= THREEx.Planets.createEarthCloud()
+	earthCloud.receiveShadow	= true
+	earthCloud.castShadow	= true
+	containerEarth.add(earthCloud)
+	onRenderFcts.push(function(delta, now){
+		earthCloud.rotation.y += 1/8 * delta;		
+	})
+	
+
+    
+	//Sun
+	var meshSun	= THREEx.Planets.createSun()
+	meshSun.position.z	= 0
+	meshSun.position.x	= 9.3
+	meshSun.position.y	=-0.01
+	meshSun.scale.set(3.5,3.5,3.5 )
+	// mesh.visible	= false
+	scene.add(meshSun)
+
+	var geometry	= new THREE.SphereGeometry(0.5, 32, 32)
+	geometry	= mesh.geometry.clone()
+	var material	= THREEx.createAtmosphereMaterial()
+	material.uniforms.glowColor.value.set(0xb97f15)
+	var mesh	= new THREE.Mesh(geometry, material );
+	mesh.scale.multiplyScalar(1.01);
+	meshSun.add( mesh )
+
+
+	var geometry	= new THREE.SphereGeometry(0.5, 32, 32)
+	geometry	= mesh.geometry.clone()
+	var material	= THREEx.createAtmosphereMaterial()
+	material.side	= THREE.BackSide
+	material.uniforms.coeficient.value	= 0.5
+	material.uniforms.power.value		= 15.0
+	material.uniforms.glowColor.value.set(0xb97f15)
+	var mesh	= new THREE.Mesh(geometry, material )
+	mesh.scale.multiplyScalar(1.2);
+	meshSun.add( mesh )
+	
+	//Mercury
+    var meshMercury	= THREEx.Planets.createMercury()
+	meshMercury.scale.set(0.4, 0.4, 0.4 )
+	// mesh.visible	= false
+	planets.push(meshMercury)
+	//scene.add(meshMercury)
+	
+	//Venus
+    var meshVenus	= THREEx.Planets.createVenus()
+	meshVenus.scale.set(0.6, 0.6, 0.6 )
+	// mesh.visible	= false
+	planets.push(meshVenus)
+	planets.push(containerEarth)
+
+	//scene.add(meshVenus)	
+	
+	//Mars
+    var meshMars	= THREEx.Planets.createMars()
+	meshMars.scale.set(0.5, 0.5, 0.5 )
+	// mesh.visible	= false
+	planets.push(meshMars)
+	//scene.add(meshMars)
+	
+	//Jupiter 
+    var meshJupiter	= THREEx.Planets.createJupiter()
+	meshJupiter.scale.set(1.6, 1.6, 1.6 )
+	// mesh.visible	= false
+	planets.push(meshJupiter)
+	//scene.add(meshJupiter)
+	
+	//Saturn 
+    var meshSaturn	= THREEx.Planets.createSaturn()
+	meshSaturn.scale.set(1.4, 1.4, 1.4 )
+	//meshSaturn.receiveShadow	= true
+	//meshSaturn.castShadow		= true
+	var ring	= THREEx.Planets.createSaturnRing()
+	ring.receiveShadow	= true
+	ring.castShadow		= true
+	meshSaturn.add(ring)
+	// mesh.visible	= false
+	planets.push(meshSaturn)
+	//scene.add(meshSaturn)
+	
+	//Uranus
+    var meshUranus	= THREEx.Planets.createUranus()
+	meshUranus.scale.set(1.1,1.1,1.1 )
+    //meshUranus.receiveShadow	= true
+	//meshUranus.castShadow		= true
+	var ring	= THREEx.Planets.createUranusRing()
+	ring.receiveShadow	= true
+	ring.castShadow		= true
+	meshUranus.add(ring)	
+	// mesh.visible	= false
+	planets.push(meshUranus)
+	//scene.add(meshUranus)
+
+	
+	//Neptune 
+    var meshNeptune	= THREEx.Planets.createNeptune()
+	meshNeptune.scale.set(0.9, 0.9, 0.9 )
+	// mesh.visible	= false
+	planets.push(meshNeptune)
+	//scene.add(meshNeptune)
+	
+
+
+      /* for(var c=1;c<9;c++){
+ 		  planets[c-1].position.z	= 0
+		  planets[c-1].position.x	= distance_x[c-1]
+		  planets[c-1].position.y	=-0.01
+		  scene.add(planets[c-1])
+      }*/
+
+
+	
+	//////////////////////////////////////////////////////////////////////////////////
+	//		render the scene						//
+	//////////////////////////////////////////////////////////////////////////////////
+	onRenderFcts.push(function(){
+		 renderer.render( scene, camera );		
+	})	
+	
+	//////////////////////////////////////////////////////////////////////////////////
+	//		loop runner							//
+	//////////////////////////////////////////////////////////////////////////////////
+	var lastTimeMsec= null
+	requestAnimationFrame(function animate(nowMsec){
+		// keep looping
+		requestAnimationFrame( animate );
+		// measure time
+		lastTimeMsec	= lastTimeMsec || nowMsec-1000/60
+		var deltaMsec	= Math.min(200, nowMsec - lastTimeMsec)
+		lastTimeMsec	= nowMsec
+		// call each update function
+		onRenderFcts.forEach(function(onRenderFct){
+			onRenderFct(deltaMsec/1000, nowMsec/1000)
+		})
+	})
+	
+    
+
+	//////////////////////////////////////////////////////////////////////////////////
+	//		Logic						//
+	//////////////////////////////////////////////////////////////////////////////////
+$(function(){
+      init()
+	  p=0;
+	  Dice(p)	
+	window.setTimeout(function(){
+      Leap.loop(controllerOptions, function(frame) {
+      	if (frame.pointables.length > 0) {		
+      	if(visited[randomNumber-1]!=1){
+	            var c=0;
+	            var a=frame.pointables.length
+	            for (var i = 0; i < a; i++) {
+		          if(frame.pointables[i].extended == 1){
+	                 c++;	
+		          } 
+                }     
+           finger=c;               
+	      //Positioning
+	      //document.getElementById("numbers").innerHTML=c;
+	      window.setTimeout(function(){
+	      document.getElementById("numbers").innerHTML="Planet Placed in:"+finger;	
+		  if(placed[finger-1]==0 && p!=8){
+		  placed[finger-1]=1
+		  planets[randomNumber-1].position.z	= 0
+		  planets[randomNumber-1].position.x	= distance_x[finger-1]
+		  planets[randomNumber-1].position.y	=-0.01
+		  scene.add(planets[randomNumber-1])
+		  p++;
+          position[randomNumber-1]=finger-1;
+		  visited[randomNumber-1]=1;
+		   window.setTimeout(function(){
+		  if(p!=8){
+		  	document.getElementById("numbers").innerHTML=0;
+		  	Dice(p)
+		  }
+		  else checkWin()
+		   },2000);
+		  }	 
+		  },2000);       
+        }//visited  end
+
+        }//IF pointable  End 
+        
+      });  //End of Leap.loop 
+      },2000)  
+}); //End of function   
+
+	  </script>
+
+
+
+<div class="speech-bubble" id="current_planet" style="height: 60px;font-size:35px;text-align: center;padding-top:30px;color:white;font-family: Times New Roman;">
+</div>
+
+<div id="numbers" style="height: 60px;font-size:26px;text-align: center;padding-top:30px;color:white;font-family: Times New Roman;">
+</div>
+
+</div>
+</body>
+</html>
