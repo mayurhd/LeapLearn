@@ -22,18 +22,35 @@
     <script type="text/javascript" src="js/jquery.min.js"></script>
     <script type="text/javascript" src="js/three.min.js"></script>
     <script type="text/javascript" src="js/leap.min.js"></script>
-    <script type="text/javascript" src="LeapCameraControls.js"></script>
-    <script type="text/javascript" src="LeapObjectControls.js"></script>
-    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+    <script type="text/javascript" src="js/LeapCameraControls.js"></script>
+    <script type="text/javascript" src="js/LeapObjectControls.js"></script>
+    
 
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
 	<script type="text/javascript">
 
 	
 	var haltGestures = false;
 	var hand, pinch;
 	var renderer;
+
+// 	window.onload = function(){
+// 		GoInFullscreen();
+// 	};
+
+// 	function GoInFullscreen(element) {
+// 	if(document.requestFullscreen)
+// 		document.requestFullscreen();
+// 	else if(document.mozRequestFullScreen)
+// 		document.mozRequestFullScreen();
+// 	else if(document.webkitRequestFullscreen)
+// 		document.webkitRequestFullscreen();
+// 	else if(document.msRequestFullscreen)
+// 		document.msRequestFullscreen();
+// }
+
 	function init() {
         // is webgl supported?
         if (!Detector.webgl) {
@@ -126,12 +143,16 @@
 							  	else if (picture(gesture.position)) {
 							  		console.log("picture --> "+gesture.position[0]);
 							  		
-							  		if(localStorage.getItem("solar")){
+							  		// if(localStorage.getItem("solar")){
+							  			if (true) {
 
-							  			// window.location = "http://www.yoururl.com";
+							  			window.location = "file:///M:/LeapLearn/picture-puzzle.html";
 							  		}
 							  		else{
 							  			swal("Solar system is yet to be arranged.", "Try again", "error");
+							  			setTimeout(function(){
+							  				location.reload();
+							  			},5000);
 							  		}
 
 							  	}
@@ -141,12 +162,16 @@
 							  		// if(localStorage.getItem("puzzle")) {
 							  			if(true) {
 
-							  			window.location = "file:///M:/LeapLearn/tower-of-hanoi-demo.html";
+							  			window.location = "file:///M:/LeapLearn/tower-of-hanoi.html";
+							  			// swal("Picture puzzle is yet to be solved.", "Try again", "error");
 							  		}
 							  		else{
 							  			swal("Picture puzzle is yet to be solved.", "Try again", "error");
+							  			setTimeout(function(){
+							  				location.reload();
+							  			},5000);
+							  			
 							  		}
-							  		
 							  	}
 							  	// render();
 							  	break;

@@ -7,12 +7,20 @@
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 
     <link href='css/puzzle.css' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+
 
     <script type="text/javascript" src="js/jquery.min.js"></script>
     <script type="text/javascript" src="js/leap.min.js"></script>
     <script type="text/javascript" src="js/three.min.js"></script>
     <script type="text/javascript" src="js/LeapCameraControls.js"></script>
     <script type="text/javascript" src="js/LeapObjectControls.js"></script>
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+
 
     <script type="text/javascript">
         const PUZZLE_DIFFICULTY = 3;
@@ -22,6 +30,7 @@
         var _stage;
         var _canvas;
         var renderer;
+        var steps=0;
 
         var currentPieceBool = false;
 
@@ -36,6 +45,13 @@
 
         var _mouse;
 
+        var images = [
+            'img/minion.jpeg',
+            'img/mario.jpeg',
+            'img/1.jpeg',
+            'img/2.jpeg'
+        ];
+
         // window.onload = function(){
         //     document.getElementById("steps").innerHTML = (Math.pow(2, totalDiscs)) - 1;
         //     if(localStorage.getItem("tower_score") != null){
@@ -46,7 +62,7 @@
         //     }
             
         // };
-    
+
         function init(){
 
             renderer = new THREE.WebGLRenderer({antialias: true});
@@ -57,9 +73,13 @@
             _img = new Image();
             _img.addEventListener('load',onImage,false);
             
-            _img.src = "img/mario.jpeg";
-            // _img.src = "seaface.jpg";
+
+            // _img.src = "img/mario1.jpeg";
+             // = "img/minion.jpeg";
             // _img.src = "xyz-small.jpg";
+
+            _img.src = images[Math.floor(Math.random() * images.length)];
+
 
             hideCursor();
             
@@ -270,7 +290,7 @@
                 _currentPiece.yPos = _currentDropPiece.yPos;
                 _currentDropPiece.xPos = tmp.xPos;
                 _currentDropPiece.yPos = tmp.yPos;
-
+                steps++;
                 console.log("Dropped");
 
             }
@@ -300,7 +320,15 @@
             // document.onmousemove = null;
             // document.onmouseup = null;
             startPuzzle = true;
-            initPuzzle();
+
+            // swal("Good job!", "Total moves taken : "+moves, "success");
+            swal("Congrats!", "You made it in "+steps+" steps", "success");
+                                  
+            setTimeout(function(){ 
+            window.location = "file:///M:/LeapLearn/dashboard.html";
+            }, 5000);
+
+            // initPuzzle();
         }
         function shuffleArray(o){
             for(var j, x, i = o.length; i; j = parseInt(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x);
@@ -384,12 +412,12 @@
                         shufflePuzzle();
                         break;
                       }
-                      if(_currentPiece == null){
+                      if(_currentPiece == null && !currentPieceBool){
                         console.log("Select");
                         // movePiece();
                         onPuzzleClick(frame);                        
                       }
-                      else if(_currentPiece != null){
+                      else if(_currentPiece != null  && currentPieceBool){
                         console.log("Drop");
                         // moveSecondPiece();
                         onPuzzleClick(frame);   
@@ -412,7 +440,26 @@
 <body>
     <div id="container"></div>
     <div id="cursor"></div>
-    <canvas id="canvas"></canvas>
+    <center><canvas id="canvas"></canvas></center>
+
+    <button type="button" class="btn btn-primary" data-toggle="modal" data-target=".bd-example-modal-lg">Large modal</button>
+
+    <div id="reference-modal" class="modal fade bd-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
+      <center><img class="reference" src=""></center>
+    </div>
+
+    <script type="text/javascript">
+
+        // $(".reference").css({"width": _puzzleWidth/2, "height": _puzzleHeight/2});
+
+        $(".btn").on('click', function(){
+            $(".reference").attr("src",_img.src);
+            setTimeout(function(){
+                $('#reference-modal').modal('hide');
+            },2000);
+        })        
+    </script>
+
 </body>
 
 </html>

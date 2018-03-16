@@ -33,7 +33,7 @@
       var towerLeft, towerMid, towerRight, platform, mid_wall, left_wall, right_wall;
       var leftDiscSize = [], midDiscSize = [], rightDiscSize = []; 
 
-      var moves = 0, totalDiscs = 4;
+      var moves = 0, totalDiscs = 3;
       var haltGestures = false;
 
 
@@ -436,7 +436,7 @@
                                           haltGestures = true;
                                           swal("Good job!", "Total moves taken : "+moves, "success");
                                           setTimeout(function(){ 
-		                                  	window.location = "file:///M:/LeapLearn/index.html";
+		                                  	window.location = "file:///M:/LeapLearn/dashboard.html";
 		                                  }, 3000);
                                         }
 		                                }                           
@@ -528,7 +528,7 @@
 
                                   	  swal("Good job!", "Total moves taken : "+moves, "success");
                                       setTimeout(function(){ 
-	                                  	window.location = "file:///M:/LeapLearn/index.html";
+	                                  	window.location = "file:///M:/LeapLearn/dashboard.html";
 	                                  }, 3000);
                                     }
                                   }                                  
