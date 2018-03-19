@@ -404,24 +404,24 @@ $(function(){
 	      //Positioning
 	      //document.getElementById("numbers").innerHTML=c;
 	      window.setTimeout(function(){
-	      document.getElementById("numbers").innerHTML="Planet Placed in:"+finger;	
-		  if(placed[finger-1]==0 && p!=8){
-		  placed[finger-1]=1
-		  planets[randomNumber-1].position.z	= 0
-		  planets[randomNumber-1].position.x	= distance_x[finger-1]
-		  planets[randomNumber-1].position.y	=-0.01
-		  scene.add(planets[randomNumber-1])
-		  p++;
-          position[randomNumber-1]=finger-1;
-		  visited[randomNumber-1]=1;
-		   window.setTimeout(function(){
-		  if(p!=8){
-		  	document.getElementById("numbers").innerHTML=0;
-		  	Dice(p)
-		  }
-		  else checkWin()
-		   },2000);
-		  }	 
+			      document.getElementById("numbers").innerHTML="Planet Placed in:"+finger;	
+				  if(placed[finger-1]==0 && p!=8){
+				  placed[finger-1]=1
+				  planets[randomNumber-1].position.z	= 0
+				  planets[randomNumber-1].position.x	= distance_x[finger-1]
+				  planets[randomNumber-1].position.y	=-0.01
+				  scene.add(planets[randomNumber-1])
+				  p++;
+		          position[randomNumber-1]=finger-1;
+				  visited[randomNumber-1]=1;
+					  window.setTimeout(function(){
+						  if(p!=8){
+						  	document.getElementById("numbers").innerHTML=0;
+						  	Dice(p)
+						  }
+						  else checkWin()
+						   },2000);
+					  }	 
 		  },2000);       
         }//visited  end
 

@@ -144,3 +144,24 @@ body {
 }
 
 
+#float {
+    position: relative;
+    -webkit-animation: floatBubble 2s   normal ease-out;
+    animation: floatBubble 2s   normal ease-out;
+}
+@-webkit-keyframes floatBubble {
+    0% {
+        top:500px;
+    }
+    100% {
+        top: 0px;
+    }
+}
+@keyframes floatBubble {
+    0% {
+        top:500px;
+    }
+    100% {
+        top: 0px;
+    }
+}

@@ -32,6 +32,7 @@
         var startPuzzle = true;
         var _stage;
         var _canvas;
+        var mTop;
         var renderer;
         var steps=0;
 
@@ -49,9 +50,9 @@
         var _mouse;
 
         var images = [
-            'img/minion.jpeg',
             'img/mario.jpeg',
-            'img/tomnjerry.jpeg'
+            'img/mario.jpeg',
+            'img/mario.jpeg'
         ];
 
         // window.onload = function(){
@@ -101,7 +102,11 @@
             _canvas.width = _puzzleWidth;
             _canvas.height = _puzzleHeight;
             _canvas.style.border = "1px solid black";
+            mTop = ($(window).height() - canvas.height)/2;
+            // document.getElementsByTagName("canvas").style.marginTop = mTop;
+            $('canvas').css('margin-top' ,mTop);
         }
+
         function initPuzzle(){
             _pieces = [];
             _mouse = {x:0,y:0};
@@ -329,9 +334,9 @@
             // swal("Good job!", "Total moves taken : "+moves, "success");
             swal("Congrats!", "You made it in "+steps+" steps", "success");
                                   
-            setTimeout(function(){ 
-            window.location = "http://localhost/LeapLearn/dashboard.html";
-            }, 5000);
+            // setTimeout(function(){ 
+            // window.location = "http://localhost/LeapLearn/dashboard.html";
+            // }, 5000);
 
             // initPuzzle();
         }
